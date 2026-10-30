@@ -9,7 +9,7 @@ import { sqlFrom } from '../storage/sqlAdapter';
 import { PressScale } from '../components/PressScale';
 import { PlanFeedbackCard } from '../components/PlanFeedbackCard';
 import { JourneyCard } from '../components/JourneyCard';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, radius, space } from '../theme/tokens';
 
 /** Home, following the mockup's Today screen. No sample alarm times: we do not schedule alarms yet. */
 export default function HomeScreen() {
@@ -50,67 +50,80 @@ export default function HomeScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+
       <View style={styles.header}>
         <Text style={styles.wordmark}>wakewise</Text>
         <Text style={styles.caption}>{today}</Text>
       </View>
 
-      <Text style={styles.caption}>Next alarm</Text>
-      <Text style={styles.empty}>{nextClock ?? 'None set'}</Text>
-      {next ? (
+      <View style={styles.hero}>
+        <Text style={styles.caption}>Next alarm</Text>
+        <Text style={styles.time}>{nextClock ?? '--:--'}</Text>
         <Text style={styles.caption}>
-          {next.status === 'missing' ? 'Not found on this iPhone. Check the alarm in the Clock app.' : 'Scheduled on this iPhone.'}
+          {next
+            ? next.status === 'missing'
+              ? 'Not found on this iPhone. Check it in the Clock app.'
+              : 'Set on this iPhone.'
+            : 'Nothing set yet. Tell me what you need to do.'}
         </Text>
-      ) : (
-        <Text style={styles.caption}>No alarm is saved yet.</Text>
-      )}
-
-      <View style={styles.actions}>
-        <View style={[styles.card, styles.cardOutline]} accessibilityState={{ disabled: true }}>
-          <Text style={styles.cardTitle}>Quick alarm</Text>
-          <Text style={styles.caption}>Just a time. Not built yet</Text>
-        </View>
-        <PressScale style={[styles.card, styles.cardSignal]} onPress={() => router.push('/capture')} accessibilityRole="button" accessibilityLabel="Plan a purpose">
-          <Text style={[styles.cardTitle, styles.cardPrimaryText]}>Plan a purpose</Text>
-          <Text style={[styles.caption, styles.cardPrimaryText]}>Say what you need</Text>
-        </PressScale>
       </View>
+
+      <PressScale style={styles.primary} onPress={() => router.push('/capture')} accessibilityRole="button" accessibilityLabel="Plan a purpose">
+        <Text style={styles.primaryTitle}>Plan a purpose</Text>
+        <Text style={styles.primaryBody}>Say or type what you need to get done, and I’ll plan the alarm.</Text>
+      </PressScale>
+
+      <PressScale style={styles.secondary} onPress={() => router.push('/capture')} accessibilityRole="button" accessibilityLabel="Quick alarm">
+        <View style={styles.flex}>
+          <Text style={styles.rowTitle}>Quick alarm</Text>
+          <Text style={styles.caption}>Just a time, such as “wake me at 6:30”</Text>
+        </View>
+        <Text style={styles.chevron}>›</Text>
+      </PressScale>
 
       <JourneyCard />
       <PlanFeedbackCard />
-      <PressScale onPress={() => router.push('/settings')} accessibilityRole="button" style={styles.textLink}>
-        <Text style={styles.link}>Settings</Text>
-      </PressScale>
-      <PressScale onPress={() => router.push('/timers')} accessibilityRole="button" style={styles.textLink}>
-        <Text style={styles.link}>Timers</Text>
-      </PressScale>
-      <PressScale onPress={() => router.push('/context')} accessibilityRole="button" style={styles.textLink}>
-        <Text style={styles.link}>Your context</Text>
-      </PressScale>
-      <PressScale onPress={() => router.push('/consent')} accessibilityRole="button" style={styles.textLink}>
-        <Text style={styles.link}>Speech and privacy</Text>
-      </PressScale>
-      {__DEV__ ? (
-        <PressScale onPress={() => router.push('/alarm-test')} accessibilityRole="button" style={styles.textLink}>
-          <Text style={styles.link}>Alarm test (development)</Text>
-        </PressScale>
-      ) : null}
+
+      <Text style={styles.section}>More</Text>
+      <View style={styles.list}>
+        <ListRow label="Timers" onPress={() => router.push('/timers')} />
+        <ListRow label="Your context" detail="Places and planning times" onPress={() => router.push('/context')} />
+        <ListRow label="Settings" detail="Alarm sound" onPress={() => router.push('/settings')} />
+        <ListRow label="Speech and privacy" detail="What is shared, and when" onPress={() => router.push('/consent')} last={!__DEV__} />
+        {__DEV__ ? <ListRow label="Alarm test" detail="Development only" onPress={() => router.push('/alarm-test')} last /> : null}
+      </View>
     </ScrollView>
   );
 }
 
+function ListRow({ label, detail, onPress, last }: { label: string; detail?: string; onPress: () => void; last?: boolean }) {
+  return (
+    <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={[styles.row, !last && styles.rowDivider]}>
+      <View style={styles.flex}>
+        <Text style={styles.rowTitle}>{label}</Text>
+        {detail ? <Text style={styles.caption}>{detail}</Text> : null}
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </PressScale>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { padding: space.xl, gap: space.md, flexGrow: 1, backgroundColor: colors.paper },
+  container: { padding: space.lg, gap: space.lg, flexGrow: 1, backgroundColor: colors.paper, paddingBottom: space.xl * 2 },
+  flex: { flex: 1, gap: 2 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: space.xl },
-  wordmark: { color: colors.ink, fontSize: 28, fontWeight: '700', letterSpacing: -0.8 },
-  caption: { color: colors.muted, ...type.caption },
-  empty: { color: colors.ink, fontSize: 72, fontWeight: '200', letterSpacing: -2 },
-  actions: { flexDirection: 'row', gap: space.md, marginTop: space.xl },
-  card: { flex: 1, borderRadius: radius.card, padding: space.lg, gap: space.xs, minHeight: 112, justifyContent: 'flex-end' },
-  cardOutline: { borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card, justifyContent: 'flex-end' },
-  cardSignal: { backgroundColor: colors.primary },
-  cardTitle: { color: colors.ink, ...type.title },
-  cardPrimaryText: { color: colors.onPrimary },
-  textLink: { alignSelf: 'center', marginTop: space.xl },
-  link: { color: colors.ink, textDecorationLine: 'underline', ...type.label },
+  wordmark: { color: colors.ink, fontSize: 26, fontWeight: '700', letterSpacing: -0.6 },
+  caption: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+  hero: { gap: space.xs, paddingVertical: space.sm },
+  time: { color: colors.ink, fontSize: 84, fontWeight: '200', letterSpacing: -3, lineHeight: 92 },
+  primary: { backgroundColor: colors.primary, borderRadius: radius.card, padding: space.lg, gap: space.xs },
+  primaryTitle: { color: colors.onPrimary, fontSize: 20, fontWeight: '600' },
+  primaryBody: { color: colors.onPrimary, fontSize: 14, lineHeight: 20 },
+  secondary: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: radius.card, padding: space.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  section: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 0.6, textTransform: 'uppercase', marginTop: space.md },
+  list: { backgroundColor: colors.card, borderRadius: radius.card, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space.md, paddingHorizontal: space.lg },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+  rowTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
+  chevron: { color: colors.muted, fontSize: 22, marginLeft: space.sm },
 });
