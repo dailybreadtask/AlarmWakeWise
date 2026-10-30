@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "WakeWise",
+    "slug": "wakewise",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dailytaskapps.wakewise",
+      "infoPlist": {
+        "NSAlarmKitUsageDescription": "WakeWise schedules the alarms you set so they ring even when the app is closed.",
+        "NSSupportsLiveActivities": true,
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "WakeWise uses the microphone so you can say what you need instead of typing it."
+      },
+      "appleTeamId": "MZ3DBZ7K9T"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dailytaskapps.wakewise"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "WakeWise uses the microphone so you can say what you need instead of typing it. Audio is sent to our speech service only after you allow it."
+        }
+      ],
+      "expo-asset"
+    ],
+    "scheme": "wakewise",
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

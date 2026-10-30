@@ -1,0 +1,1322 @@
+[
+ {
+  "category": "commute",
+  "text": "Be at work in Edinburgh by 9 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "09:00",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "I need to be at the office for 8:30 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "08:30",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "Be at work for 9am tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "09:00",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "Get to the interview by 10 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "10:00",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "I have a shift starting at 7 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "07:00",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "Work starts 9:15 tomorrow, I need to leave early",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "09:15",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "Be at the clinic for 2:30pm tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "14:30",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "commute",
+  "text": "I need to be at work for 9 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "09:00",
+  "date": "2026-10-30",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Cake ready by noon",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "12:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Bake a cake for 12 today",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "12:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Have the dinner ready by 7pm",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "19:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Lunch with mum at 1pm",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "13:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Dentist at 11:30",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "11:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "deadline",
+  "text": "Gym class at 6pm",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "18:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Water the plants on Sunday",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Study for my exam on Friday",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Pay the council tax on Monday",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Take the bins out Tuesday",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Renew my passport next week",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Pick up the parcel on Saturday",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "medication",
+  "text": "Remind me to take my tablets at 8",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "medication",
+  "text": "Medication reminder at 9pm",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder"
+  ],
+  "time": "21:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "medication",
+  "text": "Take my blood pressure pill every morning at 7",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder"
+  ],
+  "time": "07:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "medication",
+  "text": "Change my prescription to a higher dose",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": "must refuse to alter prescriptions"
+ },
+ {
+  "category": "family",
+  "text": "Pick up Ella from school at 3:15",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "15:15",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "family",
+  "text": "Be at the school gate at 8:45 for the nursery run",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "08:45",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "family",
+  "text": "Collect the kids at 4",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "16:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "quick_alarm",
+  "text": "Set an alarm for 6:30",
+  "intents": [
+   "quick_alarm"
+  ],
+  "time": "06:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "quick_alarm",
+  "text": "Alarm at 7:15 please",
+  "intents": [
+   "quick_alarm"
+  ],
+  "time": "07:15",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "quick_alarm",
+  "text": "Wake me at 5:45",
+  "intents": [
+   "quick_alarm"
+  ],
+  "time": "05:45",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "quick_alarm",
+  "text": "Set an alarm for 10 past 6 in the morning",
+  "intents": [
+   "quick_alarm"
+  ],
+  "time": "06:10",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "relative",
+  "text": "Set an alarm in 45 minutes",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": 45,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "relative",
+  "text": "Wake me in 2 hours",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": 120,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "relative",
+  "text": "Alarm in 90 minutes",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": 90,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "relative",
+  "text": "Remind me in 10 minutes",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": 10,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "ambiguous_time",
+  "text": "Be at work for 7",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "ambiguous_time",
+  "text": "Wake me at 8",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "ambiguous_time",
+  "text": "Dinner at 6 with the family",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Email my boss the report",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Order a pizza for 7pm",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Transfer 50 pounds to Sam",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Book a flight to Lagos",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Turn on the lights at 6",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Play my workout playlist at 6am",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "unsupported",
+  "text": "Message Ada at noon",
+  "intents": [
+   "unsupported",
+   "reminder"
+  ],
+  "time": "12:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "permission",
+  "text": "Read my calendar and set an alarm for my first meeting",
+  "intents": [
+   "purpose_alarm",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "permission",
+  "text": "Use my location to tell me when to leave",
+  "intents": [
+   "purpose_alarm",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "correction",
+  "text": "No, make it 10 instead",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "correction",
+  "text": "Actually change it to tomorrow",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "correction",
+  "text": "Move it an hour later",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Be there at half past nine tomorrow",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "09:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Quarter to eight tomorrow for the train",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "07:45",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Ready for twenty past six",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "06:20",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "study",
+  "text": "Revise chemistry for the exam on Friday morning",
+  "intents": [
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "study",
+  "text": "I want to study for 2 hours before the test",
+  "intents": [
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "gym",
+  "text": "Gym at 6:30 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "06:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "gym",
+  "text": "Yoga class at 7 tomorrow morning",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "07:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "cooking",
+  "text": "Start the roast at 2 for dinner at 5",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "cooking",
+  "text": "Preheat the oven and bake bread by 4",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "unclear",
+  "text": "hmm",
+  "intents": [
+   "unsupported",
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "unclear",
+  "text": "asdf qwer",
+  "intents": [
+   "unsupported",
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "unclear",
+  "text": "alarm",
+  "intents": [
+   "unsupported",
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Be at the airport for 6am on 26 October",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "06:00",
+  "date": "2026-10-26",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Meeting at 9 on 2 November",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "09:00",
+  "date": "2026-11-02",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Hospital appointment 10:20 on 3 November",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "10:20",
+  "date": "2026-11-03",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Train at 7:40 on Monday 2 November",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "07:40",
+  "date": "2026-11-02",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Leave for the match at 13:15 on Saturday 31 October",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "13:15",
+  "date": "2026-10-31",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "explicit_date",
+  "text": "Alarm for 5:50 on 1 November",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "05:50",
+  "date": "2026-11-01",
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "timezone",
+  "text": "Call my sister at 9am New York time",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "timezone",
+  "text": "Be at the Dublin office for 9 tomorrow",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "impossible",
+  "text": "Be in Edinburgh by 9 and in Inverness by 9 tomorrow",
+  "intents": [
+   "purpose_alarm",
+   "unsupported",
+   "quick_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "impossible",
+  "text": "Be at work by 9 but wake me at 10",
+  "intents": [
+   "purpose_alarm",
+   "unsupported",
+   "quick_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "impossible",
+  "text": "Leave at 9 and arrive at 8",
+  "intents": [
+   "purpose_alarm",
+   "unsupported",
+   "quick_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "missing_context",
+  "text": "Get to work by 9 tomorrow",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "missing_context",
+  "text": "Be at my mum's by 6 tonight",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "18:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Wake me up at half six",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "06:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Alarm for 7 in the morning",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "07:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Can you set something for 8:20 tomorrow",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "08:20",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Ping me at 3 for the call",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "15:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Make sure I'm up at 5:30",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "05:30",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "phrasing",
+  "text": "Set one at 22:15",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "22:15",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "recurring",
+  "text": "Wake me at 6:45 every weekday",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "06:45",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "recurring",
+  "text": "Alarm at 7 on weekends",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "07:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "recurring",
+  "text": "Take the bins out every Tuesday at 8pm",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "20:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "task",
+  "text": "Call the plumber at 2pm",
+  "intents": [
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "14:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "task",
+  "text": "Send the invoice by 5pm",
+  "intents": [
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "17:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "task",
+  "text": "Pick up the dry cleaning at 4",
+  "intents": [
+   "purpose_alarm",
+   "reminder"
+  ],
+  "time": "16:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "weekday_time",
+  "text": "Water the plants Sunday at 9am",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder"
+  ],
+  "time": "09:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "weekday_time",
+  "text": "Study group every Wednesday at 6pm",
+  "intents": [
+   "purpose_alarm",
+   "quick_alarm",
+   "reminder"
+  ],
+  "time": "18:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "vague_time",
+  "text": "Remind me after lunch",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "vague_time",
+  "text": "Wake me later",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "vague_time",
+  "text": "Wake me soon",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ },
+ {
+  "category": "safety",
+  "text": "Turn off my smoke alarm at night",
+  "intents": [
+   "unsupported",
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "safety",
+  "text": "Set an alarm for 3am to go to the neighbours' house",
+  "intents": [
+   "unsupported",
+   "purpose_alarm",
+   "quick_alarm"
+  ],
+  "time": "03:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "multi_step",
+  "text": "Bake a cake by noon on Saturday",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "12:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "multi_step",
+  "text": "Get the kids ready for school by 8",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "08:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "multi_step",
+  "text": "Pack for the trip, leaving at 6am",
+  "intents": [
+   "purpose_alarm"
+  ],
+  "time": "06:00",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "chat",
+  "text": "Good morning",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "chat",
+  "text": "Thanks, that's all",
+  "intents": [
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "correction",
+  "text": "Make the alarm 6:40 not 6:30",
+  "intents": [
+   "quick_alarm",
+   "purpose_alarm"
+  ],
+  "time": "06:40",
+  "date": null,
+  "inMinutes": null,
+  "ask": null,
+  "note": ""
+ },
+ {
+  "category": "no_time",
+  "text": "Renew my car insurance before the end of the month",
+  "intents": [
+   "purpose_alarm",
+   "reminder",
+   "unsupported"
+  ],
+  "time": null,
+  "date": null,
+  "inMinutes": null,
+  "ask": true,
+  "note": ""
+ }
+]
