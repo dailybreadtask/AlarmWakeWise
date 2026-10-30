@@ -2,7 +2,9 @@ import { Stack } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { Heading, Page, PrimaryButton, SectionLabel } from '../components/Layout';
 
 import { PressScale } from '../components/PressScale';
 import { expoReminderBridge } from '../reminders/expoReminders';
@@ -60,9 +62,10 @@ export default function TimersScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <Page>
       <Stack.Screen options={{ title: 'Timers' }} />
-      <Text style={styles.body}>Use a timer for cooking or study. When it ends you get a notification, which iOS may silence in Focus.</Text>
+      <Heading title="Timers" body="For cooking or study. When it ends you get a notification, which iOS may silence in Focus." />
+      <SectionLabel>New timer</SectionLabel>
 
       <TextInput style={styles.input} value={label} onChangeText={setLabel} placeholder="Name, for example Bake" placeholderTextColor={colors.muted} accessibilityLabel="Timer name" />
       <View style={styles.chips}>
@@ -72,12 +75,10 @@ export default function TimersScreen() {
           </PressScale>
         ))}
       </View>
-      <PressScale onPress={() => void start()} style={styles.primary} accessibilityRole="button">
-        <Text style={styles.primaryText}>Start {minutes} min timer</Text>
-      </PressScale>
+      <PrimaryButton label={`Start ${minutes} min timer`} onPress={() => void start()} />
       {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
 
-      <Text style={styles.heading}>Running</Text>
+      <SectionLabel>Running</SectionLabel>
       {timers.length === 0 ? <Text style={styles.body}>No timers running.</Text> : null}
       {timers.map((t) => (
         <View key={t.id} style={styles.row}>
@@ -90,7 +91,7 @@ export default function TimersScreen() {
           </PressScale>
         </View>
       ))}
-    </ScrollView>
+    </Page>
   );
 }
 

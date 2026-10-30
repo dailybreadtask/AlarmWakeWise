@@ -15,6 +15,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import type { TranscriptionResult } from '../speech/transcribeClient';
 import { useVoiceCapture } from '../speech/useVoiceCapture';
 import { colors, radius, space, type } from '../theme/tokens';
+import { PrimaryButton, SectionLabel } from '../components/Layout';
 
 const SUGGESTIONS = ['Bake a cake by noon', 'Be at work for 9 tomorrow', 'Study for Friday’s exam'];
 
@@ -73,7 +74,7 @@ export default function CaptureScreen() {
       <Text style={styles.question}>What do you need to get done?</Text>
 
       <View style={styles.suggestions}>
-        <Text style={styles.caption}>Or try</Text>
+        <SectionLabel>Or try</SectionLabel>
         <View style={styles.chips}>
           {SUGGESTIONS.map((s) => (
             <Pressable key={s} style={styles.chip} onPress={() => setText(s)} accessibilityRole="button" accessibilityLabel={`Use: ${s}`}>
@@ -135,15 +136,7 @@ export default function CaptureScreen() {
         </Pressable>
       ) : null}
 
-      <PressScale
-        style={[styles.send, !canSend && styles.disabled]}
-        onPress={send}
-        disabled={!canSend}
-        accessibilityRole="button"
-        accessibilityLabel="Send request"
-      >
-        <Text style={styles.sendText}>{sending ? 'Reading your request…' : 'Send'}</Text>
-      </PressScale>
+      <PrimaryButton label={sending ? 'Reading your request…' : 'Send'} onPress={() => void send()} disabled={!canSend} />
     </ScrollView>
     </View>
   );

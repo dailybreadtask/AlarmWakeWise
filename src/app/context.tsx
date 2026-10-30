@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { Heading, Page, SectionLabel } from '../components/Layout';
 import { PressScale } from '../components/PressScale';
 import {
   addPlace,
@@ -101,13 +102,14 @@ export default function ContextScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <Page>
       <Stack.Screen options={{ title: 'Your context' }} />
+      <Heading title="Your context" />
       <Text style={styles.body}>
         WakeWise keeps your places and planning times on this phone. Only a place’s name and area are sent with a request, never its address or coordinates. You can change or delete any of it here.
       </Text>
 
-      <Text style={styles.heading}>Places</Text>
+      <SectionLabel>Places</SectionLabel>
       {places.length === 0 ? <Text style={styles.body}>No places saved yet.</Text> : null}
       {places.map((p) => (
         <View key={p.id} style={styles.row}>
@@ -125,7 +127,7 @@ export default function ContextScreen() {
         </View>
       ))}
 
-      <Text style={styles.heading}>Add a place</Text>
+      <SectionLabel>Add a place</SectionLabel>
       <TextInput style={styles.input} value={label} onChangeText={setLabel} placeholder="Name, for example Work" placeholderTextColor={colors.muted} accessibilityLabel="Place name" />
       <View style={styles.chips}>
         {PLACE_KINDS.map((k) => (
@@ -143,7 +145,7 @@ export default function ContextScreen() {
         <Text style={styles.primaryText}>Save place</Text>
       </PressScale>
 
-      <Text style={styles.heading}>Planning</Text>
+      <SectionLabel>Planning</SectionLabel>
       {prefs ? (
         <>
           <Stepper label="Time to get ready" value={`${prefs.getReadyMinutes} min`} onMinus={() => void change('getReadyMinutes', -5)} onPlus={() => void change('getReadyMinutes', 5)} />
@@ -161,7 +163,7 @@ export default function ContextScreen() {
       <PressScale onPress={eraseAll} style={styles.danger} accessibilityRole="button" accessibilityLabel="Delete all saved places and preferences">
         <Text style={styles.dangerText}>Delete all my saved places and preferences</Text>
       </PressScale>
-    </ScrollView>
+    </Page>
   );
 }
 
