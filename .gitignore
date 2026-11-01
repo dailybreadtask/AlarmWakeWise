@@ -41,4 +41,9 @@ yarn-error.*
 /android
 
 # Darwin reference data (licensed): keep out of git
-server/data/
+server/data/*
+!server/data/crs-names.json
+!server/data/crs-tiploc.json
+
+# Paste-ready Railway variables (secrets)
+server/railway.env.local

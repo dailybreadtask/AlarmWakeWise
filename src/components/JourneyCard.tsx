@@ -12,6 +12,8 @@ import { moveWakeAlarm } from '../journey/moveWakeAlarm';
 import { fetchRailBoard, type RailBoardResult } from '../rail/railClient';
 import { markAlarmCancelled, saveAlarm } from '../storage/alarmRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
+import { useConsent } from '../consent/ConsentProvider';
+import { syncJourney } from '../watch/watchService';
 import { colors, space } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
@@ -26,6 +28,7 @@ interface Loaded {
 export function JourneyCard() {
   const db = useSQLiteContext();
   const sql = useMemo(() => sqlFrom(db), [db]);
+  const { hasConsent } = useConsent();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -71,7 +74,10 @@ export function JourneyCard() {
     const now = new Date().toISOString();
     await saveAlarm(sql, { id: randomUUID(), nativeId: newNativeId, wakeAt: p.wakeAt.toISOString(), title, source: 'plan', createdAt: now });
     if (result.cancelledOld) await markAlarmCancelled(sql, journey.wakeNativeId, now);
-    await saveJourney(sql, { ...journey, trainId: p.trainId, departsAt: p.departsAt, arrivesAt: p.arrivesAt, wakeAt: p.wakeAt, wakeNativeId: newNativeId });
+    const moved = { ...journey, trainId: p.trainId, departsAt: p.departsAt, arrivesAt: p.arrivesAt, wakeAt: p.wakeAt, wakeNativeId: newNativeId };
+    await saveJourney(sql, moved);
+    // The server watches the train the person chose, not the one it replaced.
+    if (hasConsent('journey_watch')) void syncJourney(sql, { id: moved.planId, ...moved }).catch(() => undefined);
     setMessage(result.cancelledOld ? 'Your alarm has moved.' : 'Your new alarm is set. The old one could not be cancelled, so check your alarms.');
     setReload((n) => n + 1);
   }

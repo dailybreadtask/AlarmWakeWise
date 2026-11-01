@@ -1,0 +1,17 @@
+{
+  "name": "wakewise-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The WakeWise server: speech to text, request reading, journey estimates, rail, weather, and overnight journey watching.",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "pg": "^8.23.1",
+    "stompit": "^1.0.0",
+    "tsx": "^4.23.15"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

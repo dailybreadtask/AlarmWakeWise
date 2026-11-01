@@ -14,6 +14,8 @@ import { speechConfig } from '../config';
 import { useSQLiteContext } from 'expo-sqlite';
 import { listPlaces, type SavedPlace } from '../context/contextRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
+import { useConsent } from '../consent/ConsentProvider';
+import { syncJourney } from '../watch/watchService';
 import { colors, space } from '../theme/tokens';
 import { fetchRailBoard, searchRailStations, type RailBoardResult, type StationMatch } from './railClient';
 
@@ -61,6 +63,7 @@ export function RailPlan({ originalText, goal, fromRaw, toRaw, deadlineAt, timez
   const [board, setBoard] = useState<RailBoardResult | null>(null);
   const db = useSQLiteContext();
   const sql = useMemo(() => sqlFrom(db), [db]);
+  const { hasConsent } = useConsent();
 
   useEffect(() => {
     let active = true;
@@ -167,7 +170,7 @@ export function RailPlan({ originalText, goal, fromRaw, toRaw, deadlineAt, timez
     const createdAt = new Date().toISOString();
     await savePlan(sql, { id: planId, goal, eventAt: deadline.toISOString(), wakeAt: plannedOutcome.wakeAt.toISOString(), getReadyMinutes: a.getReadyMinutes, createdAt });
     await saveTimeline(sql, planId, plannedOutcome.timeline);
-    await saveJourney(sql, {
+    const record = {
       planId,
       fromCrs: fromCode ?? '',
       toCrs: toCode ?? '',
@@ -181,7 +184,10 @@ export function RailPlan({ originalText, goal, fromRaw, toRaw, deadlineAt, timez
       wakeAt: plannedOutcome.wakeAt,
       wakeNativeId: nativeId,
       timezone,
-    });
+    };
+    await saveJourney(sql, record);
+    // If the person has allowed overnight watching, the server keeps an eye on this journey. Nothing moves without their say.
+    if (hasConsent('journey_watch')) void syncJourney(sql, { id: planId, ...record }).catch(() => undefined);
   }
 
   return (

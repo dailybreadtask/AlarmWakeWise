@@ -1,6 +1,8 @@
 import { readFileSync, existsSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { createServer, type IncomingMessage } from 'node:http';
 import { join } from 'node:path';
+
+import { Pool } from 'pg';
 
 import { ForecastStore } from './darwinFeed';
 import { runListener } from './darwinListener';
@@ -10,6 +12,10 @@ import { estimateJourney, JOURNEY_MODES, type JourneyMode } from './journeyEstim
 import { drivingSeconds, geocode } from './tomtom';
 import { parseCrsTable, type CrsTable } from './stationLookup';
 import { MAX_AUDIO_BYTES, transcribeAudio, type TranscribeError } from './transcribe';
+import { sendPush, type ApnsConfig } from './push';
+import { MAX_WATCHES_PER_DEVICE, parseDevice, parseDeviceId, parseIds, parseWatch } from './watchApi';
+import { runWatchCycle } from './watcher';
+import { PgWatchStore, type WatchStore } from './watchStore';
 import { WEATHER_ATTRIBUTION, fetchWeatherBody, signDeveloperToken, summariseWeather, type WeatherKitConfig, type WeatherSummary } from './weather';
 
 const token = process.env.WAKEWISE_API_TOKEN;
@@ -43,16 +49,24 @@ if (nr.host && nr.username && nr.password) {
   keepListening();
 }
 
+/** A private key from a file (on this machine) or from a base64 value (on a host that has no files). Null when neither is set. */
+function readPrivateKey(pathVar: string, base64Var: string): string | null {
+  const encoded = process.env[base64Var];
+  if (encoded) return Buffer.from(encoded, 'base64').toString('utf8');
+  const keyPath = process.env[pathVar] ?? '';
+  if (!keyPath) return null;
+  const resolved = existsSync(keyPath) ? keyPath : join(process.cwd(), keyPath);
+  return existsSync(resolved) ? readFileSync(resolved, 'utf8') : null;
+}
+
 // Weather: Apple WeatherKit. Off (503) unless all four settings are present and the key file can be read.
 function loadWeatherConfig(): WeatherKitConfig | null {
   const teamId = process.env.WEATHERKIT_TEAM_ID ?? '';
   const serviceId = process.env.WEATHERKIT_SERVICE_ID ?? '';
   const keyId = process.env.WEATHERKIT_KEY_ID ?? '';
-  const keyPath = process.env.WEATHERKIT_PRIVATE_KEY_PATH ?? '';
-  if (!teamId || !serviceId || !keyId || !keyPath) return null;
-  const resolved = existsSync(keyPath) ? keyPath : join(process.cwd(), keyPath);
-  if (!existsSync(resolved)) return null;
-  return { teamId, serviceId, keyId, privateKeyPem: readFileSync(resolved, 'utf8') };
+  const privateKeyPem = readPrivateKey('WEATHERKIT_PRIVATE_KEY_PATH', 'WEATHERKIT_PRIVATE_KEY_BASE64');
+  if (!teamId || !serviceId || !keyId || !privateKeyPem) return null;
+  return { teamId, serviceId, keyId, privateKeyPem };
 }
 const weatherConfig = loadWeatherConfig();
 let weatherToken: { value: string; expiresAt: number } | null = null;
@@ -170,6 +184,96 @@ function journeyEstimateRoute(req: import('node:http').IncomingMessage, send: (s
   });
 }
 
+// Overnight watching: a Postgres database (Neon) holds push tokens and journeys, and Apple's push service delivers the news.
+// Both are optional. Without them the app works, and watching is off. Neon's address says sslmode=require; verify-full is what
+// that already meant to the pg library, so it is spelled out to avoid a warning.
+const databaseUrl = process.env.DATABASE_URL ?? '';
+const watchStore: WatchStore | null = databaseUrl ? new PgWatchStore(new Pool({ connectionString: databaseUrl.replace('sslmode=require', 'sslmode=verify-full'), max: 3 })) : null;
+const apnsKey = readPrivateKey('APNS_PRIVATE_KEY_PATH', 'APNS_PRIVATE_KEY_BASE64');
+const apnsConfig: ApnsConfig | null =
+  process.env.APNS_TEAM_ID && process.env.APNS_KEY_ID && apnsKey ? { teamId: process.env.APNS_TEAM_ID, keyId: process.env.APNS_KEY_ID, privateKeyPem: apnsKey, topic: process.env.APNS_TOPIC ?? 'com.dailytaskapps.wakewise' } : null;
+const WATCH_EVERY_MS = 5 * 60_000;
+
+/** Reads a small JSON body, then hands it on. */
+function readJson(req: IncomingMessage, send: (status: number, body: unknown) => void, then: (body: unknown) => Promise<void>) {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  req.on('data', (chunk: Buffer) => {
+    size += chunk.length;
+    if (size <= 4096) chunks.push(chunk);
+  });
+  req.on('end', () => {
+    if (size > 4096) return send(413, { error: 'too_large' });
+    let body: unknown;
+    try {
+      body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    } catch {
+      return send(400, { error: 'bad_request' });
+    }
+    then(body).catch(() => send(500, { error: 'server_error' }));
+  });
+}
+
+/** The routes the app uses to register for pushes and to hand over a journey to watch. */
+function watchRoute(route: string, req: IncomingMessage, send: (status: number, body: unknown) => void) {
+  const store = watchStore;
+  if (!store) return send(503, { error: 'no_watch_service' });
+  readJson(req, send, async (body) => {
+    if (route === '/device') {
+      const device = parseDevice(body);
+      if (!device.ok) return send(400, { error: device.error });
+      return send(200, { deviceId: await store.upsertDevice(device.value.token, device.value.environment) });
+    }
+    if (route === '/watch') {
+      const watch = parseWatch(body, new Date());
+      if (!watch.ok) return send(400, { error: watch.error });
+      if ((await store.countActive(watch.value.deviceId)) >= MAX_WATCHES_PER_DEVICE) return send(429, { error: 'too_many_watches' });
+      try {
+        await store.upsertWatch(watch.value);
+      } catch {
+        // The device is not known to the server, for example after it was deleted.
+        return send(404, { error: 'unknown_device' });
+      }
+      return send(200, { ok: true });
+    }
+    if (route === '/watch/cancel') {
+      const ids = parseIds(body);
+      if (!ids.ok) return send(400, { error: ids.error });
+      await store.cancelWatch(ids.value.id, ids.value.deviceId);
+      return send(200, { ok: true });
+    }
+    // /device/delete: everything the server holds for this device.
+    const deviceId = parseDeviceId(body);
+    if (!deviceId.ok) return send(400, { error: deviceId.error });
+    await store.deleteDevice(deviceId.value);
+    return send(200, { ok: true });
+  });
+}
+
+if (watchStore && apnsConfig) {
+  const store = watchStore;
+  const config = apnsConfig;
+  const cycle = () => {
+    void runWatchCycle({
+      store,
+      board: (from, to) => {
+        const board = departureBoard(railStore, crsTable, from, to);
+        return board.ok ? board.departures : null;
+      },
+      push: (target, payload) => sendPush(config, target, payload),
+      now: new Date(),
+    })
+      // Log the outcome only: never a token, a station or a time.
+      .then((r) => console.log(JSON.stringify({ event: 'watch_cycle', ...r })))
+      .catch(() => console.log(JSON.stringify({ event: 'watch_cycle', error: true })));
+  };
+  setInterval(cycle, WATCH_EVERY_MS);
+  // Old finished journeys are forgotten each day.
+  setInterval(() => void store.purge(new Date(Date.now() - 24 * 3600_000)).catch(() => undefined), 24 * 3600_000);
+} else {
+  console.log(JSON.stringify({ event: 'watching_off', database: Boolean(watchStore), push: Boolean(apnsConfig) }));
+}
+
 const AUDIO_TYPE_FOR_FORMAT: Record<string, string> = { m4a: 'audio/m4a', mp4: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav', webm: 'audio/webm' };
 
 const STATUS: Record<TranscribeError, number> = { too_large: 413, unsupported_type: 415, empty: 400, provider_failed: 502, provider_timeout: 504 };
@@ -180,6 +284,12 @@ createServer((req, res) => {
     res.end(JSON.stringify(body));
   };
   const route = req.url?.split('?')[0];
+  // The host asks this to know the server is up. It says nothing about users.
+  if (req.method === 'GET' && route === '/health') return send(200, { ok: true });
+  if (req.method === 'POST' && (route === '/device' || route === '/watch' || route === '/watch/cancel' || route === '/device/delete')) {
+    if (req.headers.authorization !== `Bearer ${token}`) return send(401, { error: 'unauthorized' });
+    return watchRoute(route, req, send);
+  }
   if (req.method === 'POST' && route === '/journey/estimate') {
     if (req.headers.authorization !== `Bearer ${token}`) return send(401, { error: 'unauthorized' });
     return journeyEstimateRoute(req, send, apiKey);

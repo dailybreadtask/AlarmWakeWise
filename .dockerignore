@@ -1,0 +1,12 @@
+node_modules
+ios
+android
+.expo
+.git
+assets
+docs
+tests
+**/.env*
+**/*.p8
+server/secrets
+server/node_modules

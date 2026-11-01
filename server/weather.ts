@@ -3,7 +3,7 @@
  * A request is signed with a short-lived token (ES256), the hourly forecast is fetched,
  * and it is boiled down to one line, such as "8°, rain until 10".
  */
-import { createPrivateKey, sign } from 'node:crypto';
+import { signEs256Jwt } from './jwt';
 
 export const WEATHERKIT_BASE = 'https://weatherkit.apple.com';
 /** Apple asks for its attribution and legal link wherever its weather data is shown. */
@@ -23,16 +23,11 @@ export interface WeatherSummary {
   asOf: string;
 }
 
-const base64url = (value: Buffer | string): string => Buffer.from(value).toString('base64url');
-
 /** A developer token for one hour: header, claims and an ES256 signature, as Apple's REST API requires. */
 export function signDeveloperToken(config: WeatherKitConfig, nowSeconds: number, lifetimeSeconds = 3600): string {
   const header = { alg: 'ES256', kid: config.keyId, id: `${config.teamId}.${config.serviceId}` };
   const claims = { iss: config.teamId, iat: nowSeconds, exp: nowSeconds + lifetimeSeconds, sub: config.serviceId };
-  const signingInput = `${base64url(JSON.stringify(header))}.${base64url(JSON.stringify(claims))}`;
-  // JWT wants the raw r||s signature, not the DER form Node produces by default.
-  const signature = sign('sha256', Buffer.from(signingInput), { key: createPrivateKey(config.privateKeyPem), dsaEncoding: 'ieee-p1363' });
-  return `${signingInput}.${base64url(signature)}`;
+  return signEs256Jwt(header, claims, config.privateKeyPem);
 }
 
 export type WeatherFetch = { ok: true; body: unknown } | { ok: false; status: number };
