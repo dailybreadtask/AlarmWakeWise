@@ -46,7 +46,7 @@ These apply to every screen. They come from the approved Design canvas and the c
 - **One main action per screen:** a full-width yellow pill, 58 pt tall, fixed to the bottom. Its quieter partner is an outlined pill beside it.
 - **Big thin numerals** for anything that is a time or a count: weight 100, tight tracking.
 - **Every screen draws its own header:** a back arrow and the screen's name (`Page`). The default navigation header is off.
-- **Pickers scroll like iOS wheels,** loop, tick with a light haptic, and never stretch across the screen (`Wheel`, `regular` and `compact`).
+- **Times and lengths are set on a ruler** (`Ruler`): drag a tape past a fixed pointer, one tick at a time, with a light haptic. No spinning wheels.
 - **Live state stays in view.** A running timer is pinned while another is set. A countdown is never behind a scroll.
 - **Honest empty states.** Nothing is shown that the app does not know, such as weather before it is allowed.
 - **Reduced motion** is handled in each moving component, not added later.

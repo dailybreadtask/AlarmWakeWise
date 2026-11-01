@@ -9,7 +9,8 @@ import Svg, { Path } from 'react-native-svg';
 
 import { PlanningDisc } from '../components/PlanningDisc';
 import { PressScale } from '../components/PressScale';
-import { DurationWheel } from '../components/Wheel';
+import { Options } from '../components/Layout';
+import { Ruler } from '../components/Ruler';
 import { alarmBridge } from '../alarm/nativeBridge';
 import { expoReminderBridge } from '../reminders/expoReminders';
 import { sqlFrom } from '../storage/sqlAdapter';
@@ -22,6 +23,25 @@ const clockExact = (at: string | Date, withSeconds: boolean) =>
   new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', ...(withSeconds ? { second: '2-digit' as const } : {}), hourCycle: 'h23' }).format(new Date(at));
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+type Unit = 'sec' | 'min' | 'hr';
+
+/** What one tick of the ruler is worth, and how the scale is drawn, for each unit. */
+const UNITS: Record<Unit, { label: string; size: number; max: number; major: number; medium?: number; every: number; tick: number }> = {
+  sec: { label: 'Seconds', size: 1, max: 180, major: 10, medium: 5, every: 30, tick: 10 },
+  min: { label: 'Minutes', size: 60, max: 180, major: 10, medium: 5, every: 30, tick: 10 },
+  hr: { label: 'Hours', size: 3600, max: 24, major: 1, every: 4, tick: 24 },
+};
+
+/** The ruler that fits a length best: seconds under a minute, minutes up to three hours, hours beyond. */
+const unitFor = (seconds: number): Unit => (seconds < 60 ? 'sec' : seconds <= 180 * 60 ? 'min' : 'hr');
+
+/** "10:00", or "1:05:09" from an hour up. */
+function lengthClock(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}:${pad(m)}:${pad(seconds % 60)}` : `${pad(m)}:${pad(seconds % 60)}`;
+}
 
 /** "09:42", or "1:05:09" when an hour or more is left. */
 function countdown(ms: number): string {
@@ -54,6 +74,7 @@ export default function TimersScreen() {
   const [timers, setTimers] = useState<SavedTimer[]>([]);
   const [label, setLabel] = useState('');
   const [seconds, setSeconds] = useState<number>(600);
+  const [unit, setUnit] = useState<Unit>('min');
   const [message, setMessage] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -194,8 +215,35 @@ export default function TimersScreen() {
             ) : null}
           </View>
 
-          <DurationWheel seconds={seconds} onChange={setSeconds} accessibilityLabel="Timer length, hours, minutes and seconds" />
-          <Text style={styles.ends}>{seconds < 1 ? 'Choose a length' : `Ends at ${clockExact(endsAt, seconds < 3600)}`}</Text>
+          <View style={styles.lengthBlock}>
+            <Text style={styles.length} accessibilityLabel={`Length ${durationWords(seconds)}`}>
+              {lengthClock(seconds)}
+            </Text>
+            <Text style={styles.ends}>{seconds < 1 ? 'Choose a length' : `Ends at ${clockExact(endsAt, seconds < 3600)}`}</Text>
+          </View>
+
+          <Options
+            label="Ruler unit"
+            options={(Object.keys(UNITS) as Unit[]).map((u) => ({ value: u, label: UNITS[u].label }))}
+            value={unit}
+            onChange={(u) => {
+              void Haptics.selectionAsync();
+              setUnit(u);
+            }}
+          />
+          <Ruler
+            key={unit}
+            value={Math.min(UNITS[unit].max, Math.round(seconds / UNITS[unit].size))}
+            min={0}
+            max={UNITS[unit].max}
+            onChange={(v) => setSeconds(v * UNITS[unit].size)}
+            tickWidth={UNITS[unit].tick}
+            major={UNITS[unit].major}
+            medium={UNITS[unit].medium}
+            labelEvery={UNITS[unit].every}
+            accessibilityLabel={`Timer length in ${UNITS[unit].label.toLowerCase()}`}
+            valueText={(v) => durationWords(v * UNITS[unit].size)}
+          />
 
           <View accessibilityRole="radiogroup" accessibilityLabel="Common lengths" style={styles.presets}>
             {TIMER_PRESETS.map((n) => {
@@ -207,6 +255,7 @@ export default function TimersScreen() {
                   onPress={() => {
                     void Haptics.selectionAsync();
                     setSeconds(n);
+                    setUnit(unitFor(n));
                   }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: on }}
@@ -305,7 +354,9 @@ const styles = StyleSheet.create({
   setupTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: -space.md },
   section: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   sectionPad: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', paddingBottom: space.sm },
-  ends: { color: colors.muted, fontSize: 15, textAlign: 'center', marginTop: -space.md },
+  lengthBlock: { gap: space.xs },
+  length: { color: colors.ink, fontSize: 96, fontWeight: '100', letterSpacing: -5.5, lineHeight: 104, marginLeft: -4, fontVariant: ['tabular-nums'] },
+  ends: { color: colors.muted, fontSize: 15 },
   // Common lengths as plain numerals with a rule under the chosen one, not as pills.
   presets: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   preset: { minWidth: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },

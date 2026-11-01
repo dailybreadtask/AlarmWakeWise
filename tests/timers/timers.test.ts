@@ -161,6 +161,61 @@ describe('AlarmKit timers', () => {
   });
 });
 
+describe('timers that ring to the second', () => {
+  function countdownAlarm() {
+    const started: { id: string; seconds: number; title: string }[] = [];
+    const scheduledAlarms: string[] = [];
+    const bridge: AlarmBridge = {
+      isSupported: () => true,
+      getAuthorization: () => 'authorized',
+      requestAuthorization: async () => 'authorized',
+      schedule: async (request) => {
+        scheduledAlarms.push(request.id);
+        return { usedSound: 'systemDefault' };
+      },
+      startTimer: async (request) => {
+        started.push({ id: request.id, seconds: request.seconds, title: request.title });
+        return { usedSound: 'systemDefault' };
+      },
+      cancel: async () => undefined,
+      scheduled: async () => [],
+    };
+    return { bridge, started, scheduledAlarms };
+  }
+
+  it('starts a 30 second timer as a countdown that rings, not a notification', async () => {
+    const { bridge: notes, scheduled: noteScheduled } = fakeBridge();
+    const { bridge: alarm, started } = countdownAlarm();
+    const db = memoryDb();
+    const result = await startTimer(notes, db, { id: 't1', label: 'Tea', seconds: 30, now, nativeId: 'abc' }, alarm);
+    expect(result.ok).toBe(true);
+    expect(started).toEqual([{ id: 'abc', seconds: 30, title: 'Tea' }]);
+    expect(noteScheduled).toEqual([]);
+    expect((await listTimers(db))[0].notificationId).toBe('alarm:abc');
+  });
+
+  it('uses a scheduled alarm, not a countdown, for a timer that starts later', async () => {
+    const { bridge: notes } = fakeBridge();
+    const { bridge: alarm, started, scheduledAlarms } = countdownAlarm();
+    const db = memoryDb();
+    await startTimer(notes, db, { id: 't1', label: 'Bake', minutes: 25, now, startAt: new Date('2026-10-30T12:40:00Z'), nativeId: 'abc' }, alarm);
+    expect(started).toEqual([]);
+    expect(scheduledAlarms).toEqual(['abc']);
+  });
+
+  it('falls back to a notification if the countdown cannot be started', async () => {
+    const { bridge: notes, scheduled: noteScheduled } = fakeBridge();
+    const { bridge: alarm } = countdownAlarm();
+    alarm.startTimer = async () => {
+      throw new Error('iOS said no');
+    };
+    const db = memoryDb();
+    const result = await startTimer(notes, db, { id: 't1', label: 'Tea', seconds: 30, now }, alarm);
+    expect(result.ok).toBe(true);
+    expect(noteScheduled).toHaveLength(1);
+  });
+});
+
 describe('timers in seconds', () => {
   it('ends at the second, not the minute', async () => {
     const { bridge, scheduled } = fakeBridge();

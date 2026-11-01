@@ -1,3 +1,8 @@
+/** 0 easy, 1 medium, 2 hard. */
+export type ChallengeLevel = 0 | 1 | 2;
+
+export const LEVEL_NAMES = ['Easy', 'Medium', 'Hard'] as const;
+
 /** A sum with four choices, one correct. Generated from a random source so tests can fix it. */
 export interface Sum {
   question: string;
@@ -9,13 +14,30 @@ export type Random = () => number;
 
 const between = (rand: Random, min: number, max: number) => min + Math.floor(rand() * (max - min + 1));
 
-/** Two-digit sums: addition or subtraction, with three wrong choices close to the answer. */
-export function makeSum(rand: Random): Sum {
-  const a = between(rand, 11, 49);
-  const b = between(rand, 3, 29);
-  const adding = rand() < 0.5;
-  const answer = adding ? a + b : a - b;
-  const question = `${a} ${adding ? '+' : '−'} ${b}`;
+/**
+ * A sum with three wrong choices close to the answer.
+ * Easy: single digits added, like 4 + 7. Medium: two digits added or taken away, like 17 + 8. Hard: multiplication, like 14 × 6.
+ */
+export function makeSum(rand: Random, level: ChallengeLevel = 1): Sum {
+  let question: string;
+  let answer: number;
+  if (level === 0) {
+    const a = between(rand, 2, 9);
+    const b = between(rand, 2, 9);
+    question = `${a} + ${b}`;
+    answer = a + b;
+  } else if (level === 2) {
+    const a = between(rand, 6, 14);
+    const b = between(rand, 3, 9);
+    question = `${a} × ${b}`;
+    answer = a * b;
+  } else {
+    const a = between(rand, 11, 49);
+    const b = between(rand, 3, 29);
+    const adding = rand() < 0.5;
+    answer = adding ? a + b : a - b;
+    question = `${a} ${adding ? '+' : '−'} ${b}`;
+  }
 
   const choices = new Set<number>([answer]);
   while (choices.size < 4) {

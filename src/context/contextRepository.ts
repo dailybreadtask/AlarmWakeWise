@@ -40,7 +40,17 @@ export interface SavedPlace {
   createdAt: string;
 }
 
+export type WakeMode = 'simple' | 'challenge';
+export type ChallengeType = 'maths' | 'pattern';
+export const WAKE_MODES: readonly WakeMode[] = ['simple', 'challenge'];
+export const CHALLENGE_TYPES: readonly ChallengeType[] = ['maths', 'pattern'];
+
 export interface Preferences {
+  /** Simple: stopping the alarm is enough. Challenge: a task finishes waking up. */
+  wakeMode: WakeMode;
+  challengeType: ChallengeType;
+  /** 0 easy, 1 medium, 2 hard. */
+  challengeLevel: 0 | 1 | 2;
   /** The alarm tone used by default. One of the catalog's ids. */
   soundId: string;
   /** Minutes to get ready. Used as the default in every plan. */
@@ -51,7 +61,7 @@ export interface Preferences {
   earliestWake: string | null;
 }
 
-export const DEFAULT_PREFERENCES: Preferences = { getReadyMinutes: 30, bufferMinutes: 10, earliestWake: null, soundId: DEFAULT_WAKE_SOUND_ID };
+export const DEFAULT_PREFERENCES: Preferences = { getReadyMinutes: 30, bufferMinutes: 10, earliestWake: null, soundId: DEFAULT_WAKE_SOUND_ID, wakeMode: 'challenge', challengeType: 'maths', challengeLevel: 1 };
 
 export type PlaceInput = { id: string; label: string; area?: string | null; kind: PlaceKind; crs?: string | null; latitude?: number | null; longitude?: number | null; createdAt: string };
 
@@ -100,6 +110,9 @@ export async function deletePlace(db: SqlDb, id: string): Promise<void> {
 
 export async function savePreference(db: SqlDb, key: keyof Preferences, value: number | string | null, at: string): Promise<void> {
   if (key === 'soundId' && (typeof value !== 'string' || !WAKE_SOUNDS.some((s) => s.id === value))) throw new Error('Unknown alarm tone.');
+  if (key === 'wakeMode' && !(WAKE_MODES as readonly unknown[]).includes(value)) throw new Error('Unknown wake mode.');
+  if (key === 'challengeType' && !(CHALLENGE_TYPES as readonly unknown[]).includes(value)) throw new Error('Unknown challenge.');
+  if (key === 'challengeLevel' && !(value === 0 || value === 1 || value === 2)) throw new Error('Unknown difficulty.');
   await db.runAsync('INSERT OR REPLACE INTO preference (key, value, updated_at) VALUES (?, ?, ?)', [key, value === null ? '' : String(value), at]);
 }
 
@@ -117,6 +130,9 @@ export async function loadPreferences(db: SqlDb): Promise<Preferences> {
     bufferMinutes: minutes('bufferMinutes'),
     earliestWake: /^([01]\d|2[0-3]):[0-5]\d$/.test(earliest) ? earliest : null,
     soundId: WAKE_SOUNDS.some((s) => s.id === sound) ? sound : DEFAULT_WAKE_SOUND_ID,
+    wakeMode: (WAKE_MODES as readonly string[]).includes(map.get('wakeMode') ?? '') ? (map.get('wakeMode') as WakeMode) : DEFAULT_PREFERENCES.wakeMode,
+    challengeType: (CHALLENGE_TYPES as readonly string[]).includes(map.get('challengeType') ?? '') ? (map.get('challengeType') as ChallengeType) : DEFAULT_PREFERENCES.challengeType,
+    challengeLevel: ['0', '1', '2'].includes(map.get('challengeLevel') ?? '') ? (Number(map.get('challengeLevel')) as 0 | 1 | 2) : DEFAULT_PREFERENCES.challengeLevel,
   };
 }
 

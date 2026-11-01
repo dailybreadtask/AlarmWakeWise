@@ -17,7 +17,7 @@ const NOTIFICATION_PREFIX = 'notification:';
 /** Common lengths, in seconds. */
 export const TIMER_PRESETS = [30, 60, 300, 600, 900, 1500, 2700] as const;
 
-/** Under this, the end is a notification, which is on time to the second. An alarm is set to the minute. */
+/** A timer that starts later ends as an alarm, which iOS sets to the minute, so under this it is a notification instead. */
 const ALARM_MIN_SECONDS = 60;
 
 /** "30 sec", "1 min", "1 min 30 sec", "1 h 5 min". */
@@ -55,12 +55,23 @@ export async function startTimer(bridge: ReminderBridge, db: SqlDb, input: Start
   const endsAt = new Date(startAt.getTime() + seconds * 1000);
   if (endsAt.getTime() <= input.now.getTime()) return { ok: false, error: 'too_long' };
 
-  // Prefer a real AlarmKit alarm at the end time. Otherwise, a notification.
+  // Prefer a real AlarmKit timer or alarm, which rings. Otherwise, a notification.
   let ref: string | null = null;
-  if (alarm && seconds >= ALARM_MIN_SECONDS && (await ensureAuthorized(alarm)) === 'authorized') {
+  if (alarm && (await ensureAuthorized(alarm)) === 'authorized') {
     const nativeId = input.nativeId ?? input.id;
-    const result = await scheduleAlarm(alarm, { nativeId, wakeAt: endsAt, title: label });
-    if (result.ok) ref = `${ALARM_PREFIX}${nativeId}`;
+    if (!input.startAt && alarm.startTimer) {
+      // Starting now: a countdown, exact to the second, so even 30 seconds rings.
+      try {
+        await alarm.startTimer({ id: nativeId, seconds, title: label, soundFile: null });
+        ref = `${ALARM_PREFIX}${nativeId}`;
+      } catch {
+        ref = null;
+      }
+    } else if (seconds >= ALARM_MIN_SECONDS) {
+      // Starting later: an alarm at the end time, which iOS sets to the minute.
+      const result = await scheduleAlarm(alarm, { nativeId, wakeAt: endsAt, title: label });
+      if (result.ok) ref = `${ALARM_PREFIX}${nativeId}`;
+    }
   }
   if (!ref) {
     const permitted = await bridge.requestPermission();

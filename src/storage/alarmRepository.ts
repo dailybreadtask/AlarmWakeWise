@@ -92,3 +92,14 @@ export async function reconcileAlarms(db: SqlDb, heldNativeIds: string[], at: st
 export async function markAlarmCancelled(db: SqlDb, nativeId: string, at: string): Promise<void> {
   await db.runAsync('UPDATE alarm SET status = ?, updated_at = ? WHERE native_id = ?', ['cancelled', at, nativeId]);
 }
+
+/** One saved alarm, or null. */
+export async function getAlarm(db: SqlDb, id: string): Promise<SavedAlarm | null> {
+  const rows = await db.getAllAsync<Row>('SELECT * FROM alarm WHERE id = ?', [id]);
+  return rows[0] ? fromRow(rows[0]) : null;
+}
+
+/** Points a saved alarm at a newly scheduled OS alarm, with a new time and title, and marks it scheduled again. */
+export async function updateAlarm(db: SqlDb, id: string, change: { nativeId: string; wakeAt: string; title: string; at: string }): Promise<void> {
+  await db.runAsync('UPDATE alarm SET native_id = ?, wake_at = ?, title = ?, status = ?, updated_at = ? WHERE id = ?', [change.nativeId, change.wakeAt, change.title, 'scheduled', change.at, id]);
+}

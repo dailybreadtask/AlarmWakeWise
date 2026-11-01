@@ -20,6 +20,7 @@ export function bridgeFrom(native: WakeWiseAlarmNativeModule | null): AlarmBridg
     getAuthorization: () => native.getAuthorization(),
     requestAuthorization: () => native.requestAuthorization(),
     schedule: (request) => native.schedule(request),
+    startTimer: (request) => native.startTimer(request),
     cancel: (id) => native.cancel(id),
     scheduled: () => native.scheduled(),
     consumePendingDismissal: () => native.consumePendingDismissal(),

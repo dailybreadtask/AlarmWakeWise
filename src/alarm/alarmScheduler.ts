@@ -18,11 +18,20 @@ export interface NativeScheduleRequest {
   openAppOnStop: boolean;
 }
 
+export interface TimerRequest {
+  id: string;
+  seconds: number;
+  title: string;
+  soundFile: string | null;
+}
+
 export interface AlarmBridge {
   isSupported(): boolean;
   getAuthorization(): AuthState;
   requestAuthorization(): Promise<AuthState>;
   schedule(request: NativeScheduleRequest): Promise<{ usedSound: 'bundled' | 'systemDefault' }>;
+  /** A countdown that starts now and rings at zero, to the second. Absent where the native module is not linked. */
+  startTimer?(request: TimerRequest): Promise<{ usedSound: 'bundled' | 'systemDefault' }>;
   cancel(id: string): Promise<void>;
   scheduled(): Promise<{ id: string; state: string }[]>;
   /** The alarm the person stopped since the app last looked, if any. Read once. */

@@ -1,17 +1,18 @@
 import * as Haptics from 'expo-haptics';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, AppState, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { CREATE_ALARM_MESSAGES, createAlarm } from '../alarm/createAlarm';
+import { CREATE_ALARM_MESSAGES, createAlarm, rescheduleAlarm } from '../alarm/createAlarm';
 import { alarmBridge } from '../alarm/nativeBridge';
 import { loadPreferences } from '../context/contextRepository';
 import { nextOccurrence } from '../domain/time';
 import { soundById } from '../sound/wakeSounds';
 import { dayBeingPlanned } from '../domain/planningDay';
+import { Line } from '../components/CollapsibleLine';
 import { JourneyCard } from '../components/JourneyCard';
 import { PlanCard } from '../components/PlanCard';
 import { PlanFeedbackCard } from '../components/PlanFeedbackCard';
@@ -24,7 +25,6 @@ import { colors, space } from '../theme/tokens';
 import { useTodayWeather } from '../weather/useTodayWeather';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const MAX_LISTED = 3;
 /** Where the tape rests before an alarm is set or the person has moved it. */
 const DEFAULT_TAPE_MINUTES = 7 * 60;
 
@@ -35,33 +35,45 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const weather = useTodayWeather();
   const [alarms, setAlarms] = useState<SavedAlarm[]>([]);
+  // The day whose alarms are listed, and for which a new alarm is set. Starts as today.
+  const [selected, setSelected] = useState(() => startOfDay(new Date()));
   // The time the person has dragged the tape to, before it is set. Null until they touch the tape.
   const [draft, setDraft] = useState<number | null>(null);
   const [setting, setSetting] = useState(false);
 
   useEffect(() => {
-    let active = true;
     // An alarm stopped while the app was closed or in the background opens the challenge.
     const checkDismissal = () => {
-      if (alarmBridge.consumePendingDismissal?.()) router.push('/challenge');
+      if (!alarmBridge.consumePendingDismissal?.()) return;
+      // Simple wake mode goes straight to the briefing. Challenge asks for the task first.
+      void loadPreferences(sqlFrom(db)).then((p) => router.push(p.wakeMode === 'simple' ? '/briefing' : '/challenge'));
     };
     checkDismissal();
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkDismissal();
     });
-    void upcomingAlarms(sqlFrom(db))
-      .then((list) => {
-        if (active) setAlarms(list);
-      })
-      .catch(() => undefined);
     return () => {
-      active = false;
       appState.remove();
     };
   }, [db]);
 
+  // The list is read again each time home comes back into view, so an alarm saved or edited on another screen shows at once.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void loadAlarms(sqlFrom(db))
+        .then((list) => {
+          if (active) setAlarms(list);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [db]),
+  );
+
   function turnOff(alarm: SavedAlarm) {
-    Alert.alert('Turn off this alarm?', `${alarm.title} will not ring. You can set it again from the plan.`, [
+    Alert.alert('Turn off this alarm?', `${alarm.title} will not ring. You can switch it back on here.`, [
       { text: 'Keep it', style: 'cancel' },
       {
         text: 'Turn off',
@@ -71,11 +83,29 @@ export default function HomeScreen() {
             const sql = sqlFrom(db);
             await alarmBridge.cancel(alarm.nativeId);
             await markAlarmCancelled(sql, alarm.nativeId, new Date().toISOString());
-            setAlarms(await upcomingAlarms(sql));
+            setAlarms(await loadAlarms(sql));
           })().catch(() => Alert.alert('Could not turn it off', 'Check your alarms in the Clock app.'));
         },
       },
     ]);
+  }
+
+  /** Switches a saved alarm back on: it is set again with iOS for the same time. */
+  async function turnOn(alarm: SavedAlarm) {
+    try {
+      const sql = sqlFrom(db);
+      const prefs = await loadPreferences(sql);
+      const result = await rescheduleAlarm(sql, alarm, { wakeAt: new Date(alarm.wakeAt), title: alarm.title, soundFile: soundById(prefs.soundId).alarmFile });
+      if (!result.ok) {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Alarm not set', CREATE_ALARM_MESSAGES[result.reason]);
+      } else {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      setAlarms(await loadAlarms(sql));
+    } catch {
+      Alert.alert('Could not turn it on', 'Please try again.');
+    }
   }
 
   async function setDraftAlarm() {
@@ -84,7 +114,13 @@ export default function HomeScreen() {
     try {
       const sql = sqlFrom(db);
       const prefs = await loadPreferences(sql);
-      const wakeAt = nextOccurrence(Math.floor(draft / 60), draft % 60, new Date());
+      // On today, the next time the clock reads that; on another day, that time on that day.
+      const today = isSameDay(selected, new Date());
+      const wakeAt = today ? nextOccurrence(Math.floor(draft / 60), draft % 60, new Date()) : atTime(selected, draft);
+      if (wakeAt.getTime() <= Date.now()) {
+        Alert.alert('That time has passed', 'Choose a time that is still ahead.');
+        return;
+      }
       const result = await createAlarm(sql, { wakeAt, title: 'Alarm', soundFile: soundById(prefs.soundId).alarmFile });
       if (!result.ok) {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -93,7 +129,7 @@ export default function HomeScreen() {
       }
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setDraft(null);
-      setAlarms(await upcomingAlarms(sql));
+      setAlarms(await loadAlarms(sql));
     } finally {
       setSetting(false);
     }
@@ -108,7 +144,9 @@ export default function HomeScreen() {
 
   const now = new Date();
   const planned = dayBeingPlanned(now);
-  const next = alarms[0] ?? null;
+  const next = alarms.find((a) => new Date(a.wakeAt).getTime() > now.getTime() && a.status !== 'cancelled') ?? null;
+  const dayAlarms = alarms.filter((a) => isSameDay(new Date(a.wakeAt), selected));
+  const selectedIsToday = isSameDay(selected, now);
   const nextDate = next ? new Date(next.wakeAt) : null;
   const clock = (d: Date) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timezone }).format(d);
   const nextClock = nextDate ? clock(nextDate) : null;
@@ -119,16 +157,17 @@ export default function HomeScreen() {
   const mm = String(shown % 60).padStart(2, '0');
   const isReal = draft !== null || nextMinutes !== null;
   const countdownMinutes = nextDate ? Math.max(0, Math.round((nextDate.getTime() - now.getTime()) / 60000)) : 0;
-  const draftMinutesAway = draft !== null ? Math.round((nextOccurrence(Math.floor(draft / 60), draft % 60, now).getTime() - now.getTime()) / 60000) : 0;
+  const draftAt = draft !== null ? (selectedIsToday ? nextOccurrence(Math.floor(draft / 60), draft % 60, now) : atTime(selected, draft)) : null;
+  const draftMinutesAway = draftAt ? Math.round((draftAt.getTime() - now.getTime()) / 60000) : 0;
   const dateLine = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }).format(now);
 
   // Monday-first week that contains today.
   const mondayOffset = (now.getDay() + 6) % 7;
   const week = DAY_LABELS.map((label, i) => {
-    const day = new Date(now);
+    const day = startOfDay(new Date(now));
     day.setDate(now.getDate() - mondayOffset + i);
-    const hasAlarm = alarms.some((a) => new Date(a.wakeAt).toDateString() === day.toDateString());
-    return { label, date: day.getDate(), isToday: i === mondayOffset, hasAlarm };
+    const hasAlarm = alarms.some((a) => a.status !== 'cancelled' && isSameDay(new Date(a.wakeAt), day));
+    return { label, day, date: day.getDate(), isToday: i === mondayOffset, isSelected: isSameDay(day, selected), hasAlarm };
   });
 
   return (
@@ -178,11 +217,22 @@ export default function HomeScreen() {
 
         <View style={styles.week}>
           {week.map((d) => (
-            <View key={d.label} style={[styles.day, d.isToday && styles.dayToday]} accessibilityLabel={`${d.label} ${d.date}${d.hasAlarm ? ', has alarm' : ''}`}>
-              <Text style={[styles.dayLabel, d.isToday && styles.dayOn]}>{d.label}</Text>
-              <Text style={[styles.dayDate, d.isToday && styles.dayOn]}>{d.date}</Text>
-              <View style={[styles.dot, d.hasAlarm && !d.isToday && styles.dotOn]} />
-            </View>
+            <Pressable
+              key={d.label}
+              onPress={() => {
+                void Haptics.selectionAsync();
+                setSelected(d.day);
+                setDraft(null);
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: d.isSelected }}
+              accessibilityLabel={`${d.label} ${d.date}${d.isToday ? ', today' : ''}${d.hasAlarm ? ', has alarm' : ''}`}
+              style={[styles.day, d.isSelected && styles.dayOn]}
+            >
+              <Text style={[styles.dayLabel, d.isSelected && styles.dayText]}>{d.label}</Text>
+              <Text style={[styles.dayDate, d.isSelected && styles.dayText, d.isToday && !d.isSelected && styles.dayToday]}>{d.date}</Text>
+              <View style={[styles.dot, d.hasAlarm && !d.isSelected && styles.dotOn]} />
+            </Pressable>
           ))}
         </View>
 
@@ -201,30 +251,42 @@ export default function HomeScreen() {
           </View>
         </PressScale>
 
-        {alarms.length > 0 ? (
-          <View style={styles.alarms}>
-            {alarms.slice(0, MAX_LISTED).map((a) => (
-              <View key={a.id} style={styles.alarmCard}>
-                <Text style={styles.alarmTime}>{clock(new Date(a.wakeAt))}</Text>
-                <View style={styles.flex}>
-                  <Text style={styles.alarmTitle} numberOfLines={1}>
-                    {a.title}
-                  </Text>
-                  <Text style={styles.caption}>{dayWords(new Date(a.wakeAt), now)}</Text>
+        <View>
+          {!selectedIsToday ? <Text style={styles.dayHeading}>{dayWords(selected, now)}</Text> : null}
+          {dayAlarms.length === 0 ? (
+            <Line title="No alarms" value="Add one" onPress={() => router.push({ pathname: '/new-alarm', params: { date: ymd(selected) } })} />
+          ) : (
+            dayAlarms.map((a) => {
+              const gone = new Date(a.wakeAt).getTime() <= now.getTime();
+              return (
+                <View key={a.id} style={styles.alarmRow}>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/new-alarm', params: { alarmId: a.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit ${a.title}, ${clock(new Date(a.wakeAt))}`}
+                    style={styles.alarmMain}
+                  >
+                    <Text style={[styles.alarmTime, a.status !== 'scheduled' && styles.alarmOff]}>{clock(new Date(a.wakeAt))}</Text>
+                    <View style={styles.flex}>
+                      <Text style={styles.alarmTitle} numberOfLines={1}>
+                        {a.title}
+                      </Text>
+                      <Text style={styles.caption}>{gone ? 'Has rung' : a.status === 'missing' ? 'Not found on this iPhone' : dayWords(new Date(a.wakeAt), now)}</Text>
+                    </View>
+                  </Pressable>
+                  <Switch
+                    value={a.status === 'scheduled'}
+                    disabled={gone}
+                    onValueChange={(on) => (on ? void turnOn(a) : turnOff(a))}
+                    trackColor={{ false: '#DADAD4', true: colors.ink }}
+                    thumbColor={colors.primary}
+                    accessibilityLabel={`${a.title} alarm at ${clock(new Date(a.wakeAt))}`}
+                  />
                 </View>
-                <Switch
-                  value={a.status === 'scheduled'}
-                  onValueChange={(on) => {
-                    if (!on) turnOff(a);
-                  }}
-                  trackColor={{ false: '#DADAD4', true: colors.ink }}
-                  thumbColor={colors.primary}
-                  accessibilityLabel={`${a.title} alarm at ${clock(new Date(a.wakeAt))}`}
-                />
-              </View>
-            ))}
-          </View>
-        ) : null}
+              );
+            })
+          )}
+        </View>
 
         <JourneyCard />
         <PlanFeedbackCard />
@@ -245,18 +307,23 @@ export default function HomeScreen() {
   );
 }
 
-/** Alarms still to ring, soonest first. Reconciles with iOS first when the alarm module is there. */
-async function upcomingAlarms(sql: ReturnType<typeof sqlFrom>): Promise<SavedAlarm[]> {
+/** Saved alarms from today on, earliest first, including ones switched off. Reconciles with iOS first when the alarm module is there. */
+async function loadAlarms(sql: ReturnType<typeof sqlFrom>): Promise<SavedAlarm[]> {
   // Only compare with iOS when the alarm module is really there. Otherwise every saved alarm would look missing.
   if (alarmBridge.isSupported()) {
     const held = (await alarmBridge.scheduled()).map((a) => a.id);
     await reconcileAlarms(sql, held, new Date().toISOString());
   }
-  const now = Date.now();
-  return (await listAlarms(sql))
-    .filter((a) => new Date(a.wakeAt).getTime() > now && a.status !== 'cancelled')
-    .sort((a, b) => new Date(a.wakeAt).getTime() - new Date(b.wakeAt).getTime());
+  const since = startOfDay(new Date()).getTime();
+  return (await listAlarms(sql)).filter((a) => new Date(a.wakeAt).getTime() >= since).sort((a, b) => new Date(a.wakeAt).getTime() - new Date(b.wakeAt).getTime());
 }
+
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const isSameDay = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+/** The day at a time given in minutes after midnight. */
+const atTime = (day: Date, minutes: number) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), Math.floor(minutes / 60), minutes % 60);
+/** YYYY-MM-DD, in the phone's time zone. */
+const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 /** "Today", "Tomorrow", or the weekday and date, relative to now. */
 function dayWords(day: Date, now: Date): string {
@@ -312,10 +379,11 @@ const styles = StyleSheet.create({
   countdownStrong: { color: colors.ink, fontWeight: '500' },
   week: { flexDirection: 'row', gap: 4 },
   day: { flex: 1, height: 68, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  dayToday: { backgroundColor: colors.ink },
+  dayToday: { fontWeight: '700' },
   dayLabel: { color: colors.ink, fontSize: 13, fontWeight: '500' },
   dayDate: { color: colors.ink, fontSize: 17, fontVariant: ['tabular-nums'] },
-  dayOn: { color: colors.paper },
+  dayOn: { backgroundColor: colors.ink },
+  dayText: { color: colors.paper },
   dot: { width: 5, height: 5, borderRadius: 3, marginTop: 2, backgroundColor: 'transparent' },
   dotOn: { backgroundColor: colors.primary, borderWidth: 1, borderColor: '#B8AE1E' },
   timeIdle: { color: '#B9B9B3' },
@@ -329,8 +397,10 @@ const styles = StyleSheet.create({
   promptEyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   promptTitle: { color: colors.ink, fontSize: 26, fontWeight: '500', letterSpacing: -0.8 },
   promptMic: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
-  alarms: { gap: space.sm },
-  alarmCard: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.card, borderRadius: 22, borderWidth: 1, borderColor: colors.line, paddingVertical: space.md, paddingLeft: space.lg, paddingRight: space.md },
+  dayHeading: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', paddingBottom: space.sm },
+  alarmRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  alarmMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72 },
+  alarmOff: { color: '#A3A39D' },
   alarmTime: { color: colors.ink, fontSize: 40, fontWeight: '200', letterSpacing: -1, fontVariant: ['tabular-nums'] },
   alarmTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
   nav: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 10, paddingHorizontal: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },

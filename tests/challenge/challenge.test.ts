@@ -1,4 +1,5 @@
 import { challengeStep, startChallenge, SUMS_TO_SOLVE } from '../../src/challenge/challengeFlow';
+import { makePattern, PATTERN_LEVELS } from '../../src/challenge/pattern';
 import { makeSum, seededRandom } from '../../src/challenge/sums';
 
 describe('sums', () => {
@@ -22,6 +23,45 @@ describe('sums', () => {
       const expected = op === '+' ? Number(a) + Number(b) : Number(a) - Number(b);
       expect(sum.answer).toBe(expected);
     }
+  });
+});
+
+describe('sum levels', () => {
+  it('easy is single digits added', () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const sum = makeSum(seededRandom(seed), 0);
+      const [a, op, b] = sum.question.split(' ');
+      expect(op).toBe('+');
+      expect(Number(a)).toBeLessThan(10);
+      expect(Number(b)).toBeLessThan(10);
+      expect(sum.answer).toBe(Number(a) + Number(b));
+      expect(sum.choices).toContain(sum.answer);
+    }
+  });
+
+  it('hard is multiplication', () => {
+    for (let seed = 1; seed <= 100; seed++) {
+      const sum = makeSum(seededRandom(seed), 2);
+      const [a, op, b] = sum.question.split(' ');
+      expect(op).toBe('×');
+      expect(sum.answer).toBe(Number(a) * Number(b));
+      expect(new Set(sum.choices).size).toBe(4);
+    }
+  });
+});
+
+describe('patterns', () => {
+  it('has the right number of distinct points for each level', () => {
+    for (const level of [0, 1, 2] as const) {
+      const cells = makePattern(seededRandom(3), level);
+      expect(cells).toHaveLength(PATTERN_LEVELS[level].points);
+      expect(new Set(cells).size).toBe(cells.length);
+      expect(cells.every((c) => c >= 0 && c < 36)).toBe(true);
+    }
+  });
+
+  it('repeats for the same seed', () => {
+    expect(makePattern(seededRandom(9), 1)).toEqual(makePattern(seededRandom(9), 1));
   });
 });
 

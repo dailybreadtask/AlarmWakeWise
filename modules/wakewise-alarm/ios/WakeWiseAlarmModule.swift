@@ -22,6 +22,15 @@ struct ScheduleRequest: Record {
   @Field var openAppOnStop: Bool = false
 }
 
+struct TimerRequest: Record {
+  @Field var id: String = ""
+  /// How long the timer runs from now, in seconds. It rings when it reaches zero, to the second.
+  @Field var seconds: Double = 0
+  @Field var title: String = "Timer"
+  /// File name in the main bundle, or nil for the system alarm tone.
+  @Field var soundFile: String? = nil
+}
+
 @available(iOS 26.1, *)
 struct WakeWiseAlarmMetadata: AlarmMetadata {
   var alarmId: String
@@ -151,6 +160,60 @@ public class WakeWiseAlarmModule: Module {
       )
 
       // Scheduling an id twice is an error, so an edit replaces the old entry.
+      try? AlarmManager.shared.cancel(id: id)
+      do {
+        _ = try await AlarmManager.shared.schedule(id: id, configuration: configuration)
+      } catch AlarmManager.AlarmError.maximumLimitReached {
+        throw Exception(name: "ERR_ALARM_LIMIT", description: "iOS will not hold any more alarms for this app.")
+      }
+      return ["usedSound": usedSound]
+    }
+
+    /// A countdown that starts now and rings when it reaches zero. Unlike a scheduled alarm it is exact to the second,
+    /// so a 30 second timer rings like an alarm, and it shows its countdown on the lock screen.
+    AsyncFunction("startTimer") { (request: TimerRequest) async throws -> [String: Any] in
+      guard #available(iOS 26.1, *) else {
+        throw Exception(name: "ERR_ALARM_UNSUPPORTED", description: "System timers need iOS 26.1 or later.")
+      }
+      guard let id = UUID(uuidString: request.id) else {
+        throw Exception(name: "ERR_ALARM_ID", description: "Timer id is not a UUID.")
+      }
+      guard request.seconds >= 1 else {
+        throw Exception(name: "ERR_TIMER_LENGTH", description: "A timer needs at least one second.")
+      }
+
+      var usedSound = "systemDefault"
+      var sound = AlertConfiguration.AlertSound.default
+      if let file = request.soundFile, Self.bundledSoundExists(file) {
+        sound = .named(file)
+        usedSound = "bundled"
+      }
+
+      let title = LocalizedStringResource(String.LocalizationValue(request.title))
+      let presentation = AlarmPresentation(
+        alert: AlarmPresentation.Alert(title: title, secondaryButton: nil, secondaryButtonBehavior: nil),
+        countdown: AlarmPresentation.Countdown(
+          title: title,
+          pauseButton: AlarmButton(text: "Pause", textColor: .white, systemImageName: "pause.fill")
+        ),
+        paused: AlarmPresentation.Paused(
+          title: LocalizedStringResource("Paused"),
+          resumeButton: AlarmButton(text: "Resume", textColor: .white, systemImageName: "play.fill")
+        )
+      )
+      let attributes = AlarmAttributes<WakeWiseAlarmMetadata>(
+        presentation: presentation,
+        metadata: WakeWiseAlarmMetadata(alarmId: request.id),
+        tintColor: Color(red: 0.96, green: 0.91, blue: 0.29)
+      )
+      // No stop intent: stopping a timer is not waking up, so it must not open the wake challenge.
+      let configuration = AlarmManager.AlarmConfiguration<WakeWiseAlarmMetadata>.timer(
+        duration: request.seconds,
+        attributes: attributes,
+        stopIntent: nil,
+        secondaryIntent: nil,
+        sound: sound
+      )
       try? AlarmManager.shared.cancel(id: id)
       do {
         _ = try await AlarmManager.shared.schedule(id: id, configuration: configuration)

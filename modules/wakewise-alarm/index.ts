@@ -16,12 +16,21 @@ export interface NativeScheduleRequest {
   openAppOnStop: boolean;
 }
 
+export interface NativeTimerRequest {
+  id: string;
+  seconds: number;
+  title: string;
+  soundFile: string | null;
+}
+
 export interface WakeWiseAlarmNativeModule {
   isSupported(): boolean;
   getAuthorization(): 'authorized' | 'denied' | 'notDetermined' | 'unsupported';
   requestAuthorization(): Promise<'authorized' | 'denied' | 'notDetermined' | 'unsupported'>;
   bundledSoundExists(file: string): boolean;
   schedule(request: NativeScheduleRequest): Promise<{ usedSound: 'bundled' | 'systemDefault' }>;
+  /** A countdown that starts now and rings when it reaches zero, to the second. */
+  startTimer(request: NativeTimerRequest): Promise<{ usedSound: 'bundled' | 'systemDefault' }>;
   cancel(id: string): Promise<void>;
   scheduled(): Promise<{ id: string; state: NativeAlarmState }[]>;
   consumePendingDismissal(): { id: string; at: number } | null;

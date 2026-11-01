@@ -82,6 +82,17 @@ describe('alarm tone preference', () => {
     expect((await loadPreferences(db)).soundId).toBe('pulse');
   });
 
+  it('keeps the wake mode, challenge and difficulty, and refuses ones that do not exist', async () => {
+    const db = memoryDb();
+    expect(await loadPreferences(db)).toMatchObject({ wakeMode: 'challenge', challengeType: 'maths', challengeLevel: 1 });
+    await savePreference(db, 'wakeMode', 'simple', at);
+    await savePreference(db, 'challengeType', 'pattern', at);
+    await savePreference(db, 'challengeLevel', 2, at);
+    expect(await loadPreferences(db)).toMatchObject({ wakeMode: 'simple', challengeType: 'pattern', challengeLevel: 2 });
+    await expect(savePreference(db, 'wakeMode', 'loud', at)).rejects.toThrow(/Unknown/);
+    await expect(savePreference(db, 'challengeLevel', 3, at)).rejects.toThrow(/Unknown/);
+  });
+
   it('refuses a tone that is not in the catalog', async () => {
     await expect(savePreference(memoryDb(), 'soundId', 'no-such-tone', at)).rejects.toThrow(/Unknown/);
   });

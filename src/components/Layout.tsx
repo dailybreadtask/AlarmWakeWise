@@ -96,14 +96,14 @@ export function Field({ label, error, ...input }: { label: string; error?: strin
 }
 
 /** A few options in a row, as plain text with a rule under the chosen one. Used instead of pills. */
-export function Options<T extends string>({ options, value, onChange, label }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void; label: string }) {
+export function Options<T extends string>({ options, value, onChange, label }: { options: { value: T; label: string; disabled?: boolean }[]; value: T; onChange: (v: T) => void; label: string }) {
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.options}>
       {options.map((o) => {
         const on = o.value === value;
         return (
-          <Pressable key={o.value} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ selected: on }} style={[styles.option, on && styles.optionOn]}>
-            <Text style={[styles.optionText, on && styles.optionTextOn]}>{o.label}</Text>
+          <Pressable key={o.value} onPress={() => onChange(o.value)} disabled={o.disabled} accessibilityRole="radio" accessibilityState={{ selected: on, disabled: o.disabled }} style={[styles.option, on && styles.optionOn]}>
+            <Text style={[styles.optionText, on && styles.optionTextOn, o.disabled && styles.optionTextOff]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   optionOn: { borderBottomColor: colors.ink },
   optionText: { color: '#8A8A84', fontSize: 17 },
   optionTextOn: { color: colors.ink, fontWeight: '500' },
+  optionTextOff: { color: '#C2C2BC' },
   primary: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
   primaryText: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
   secondary: { minHeight: 58, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
