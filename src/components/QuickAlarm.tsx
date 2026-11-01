@@ -90,7 +90,7 @@ export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet, foote
   if (footer) {
     return (
       <View style={styles.footer}>
-        {MESSAGES[status] ? <Text style={styles.message} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
+        {MESSAGES[status] ? <Text style={[styles.message, done ? styles.messageOk : status !== 'setting' && styles.messageBad]} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
         {note ? <Text style={styles.message}>{note}</Text> : null}
         <View style={styles.footerRow}>
           {secondary}
@@ -130,7 +130,7 @@ export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet, foote
       >
         <Text style={styles.setText}>{done ? 'Alarm set' : `Set alarm for ${clock(at, timezone)}`}</Text>
       </PressScale>
-      {MESSAGES[status] ? <Text style={styles.message} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
+      {MESSAGES[status] ? <Text style={[styles.message, done ? styles.messageOk : status !== 'setting' && styles.messageBad]} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
       {note ? <Text style={styles.message}>{note}</Text> : null}
     </View>
   );
@@ -142,6 +142,8 @@ const styles = StyleSheet.create({
   display: { color: colors.ink, fontSize: 112, fontWeight: '100', letterSpacing: -7.3, lineHeight: 120, marginLeft: -4, fontVariant: ['tabular-nums'], ...glow },
   disabled: { opacity: 0.5 },
   message: { color: colors.ink, fontSize: 14, lineHeight: 19 },
+  messageOk: { color: colors.mint },
+  messageBad: { color: colors.coral },
   footer: { gap: space.sm },
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   setButton: { flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },

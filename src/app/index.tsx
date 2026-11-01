@@ -34,6 +34,7 @@ export default function HomeScreen() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
+  const { c } = useTheme();
   const weather = useTodayWeather();
   const [alarms, setAlarms] = useState<SavedAlarm[]>([]);
   // The day whose alarms are listed, and for which a new alarm is set. Starts as today.
@@ -181,11 +182,18 @@ export default function HomeScreen() {
             <Text style={styles.wordmark}>Wakewise</Text>
             <Text style={styles.date}>{dateLine}</Text>
           </View>
-          <PressScale style={styles.add} onPress={() => router.push('/new-alarm')} accessibilityRole="button" accessibilityLabel="New alarm">
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={1.8} strokeLinecap="round">
-              <Path d="M12 4v16M4 12h16" />
-            </Svg>
-          </PressScale>
+          <View style={styles.headerButtons}>
+            <PressScale style={styles.moon} onPress={() => router.push('/bedside')} accessibilityRole="button" accessibilityLabel="Bedside clock">
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
+              </Svg>
+            </PressScale>
+            <PressScale style={styles.add} onPress={() => router.push('/new-alarm')} accessibilityRole="button" accessibilityLabel="New alarm">
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={1.8} strokeLinecap="round">
+                <Path d="M12 4v16M4 12h16" />
+              </Svg>
+            </PressScale>
+          </View>
         </View>
 
         <View style={styles.hero}>
@@ -400,7 +408,7 @@ const styles = StyleSheet.create({
   setText: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
   setDisabled: { opacity: 0.5 },
   prompt: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: colors.ink },
-  promptEyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
+  promptEyebrow: { color: colors.indigoSoft, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   promptTitle: { color: colors.ink, fontSize: 26, fontWeight: '500', letterSpacing: -0.8 },
   promptMic: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   dayHeading: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', paddingBottom: space.sm },
@@ -413,6 +421,8 @@ const styles = StyleSheet.create({
   navItem: { flex: 1, alignItems: 'center', gap: 4, minHeight: 44 },
   navLabel: { fontSize: 12, fontWeight: '500' },
   navLabelOn: { fontWeight: '600' },
+  headerButtons: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  moon: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   // The new-alarm button sits at the top, above the clock, so it never covers the bar below.
   add: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } },
 });

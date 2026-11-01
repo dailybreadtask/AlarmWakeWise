@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 import { Backdrop, BACKDROP_PAPER } from '../components/Backdrop';
+import { Glow } from '../components/Glow';
 import { PlanningDisc } from '../components/PlanningDisc';
 import { PressScale } from '../components/PressScale';
 import { Waveform } from '../components/Waveform';
@@ -134,7 +135,10 @@ export default function CaptureScreen() {
 
       {planning ? (
         <View style={styles.planning}>
-          <PlanningDisc progress={progress} />
+          <View style={styles.discWrap}>
+            <Glow size={360} color={c.indigo} opacity={0.3} style={styles.discGlow} />
+            <PlanningDisc progress={progress} litColor={c.indigoSoft} />
+          </View>
           <View style={styles.pips} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}>
             {Array.from({ length: 20 }, (_, i) => (
               <View key={i} style={[styles.pip, i < Math.round(progress / 5) && styles.pipOn]} />
@@ -327,6 +331,8 @@ const styles = StyleSheet.create({
   keysOn: { borderColor: colors.ink },
   disabled: { opacity: 0.4 },
   planning: { flex: 1, paddingTop: 26 },
+  discWrap: { alignItems: 'center', justifyContent: 'center' },
+  discGlow: { left: '50%', marginLeft: -180, top: -60 },
   pips: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 24, marginHorizontal: space.xl },
   pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   pipOn: { backgroundColor: colors.ink },

@@ -57,6 +57,8 @@ export function JourneyCard() {
   const { journey, assessment, checkedAt, error } = loaded;
   const text = journeyText(assessment, journey, checkedAt);
   const proposal: WakeAlternative | null = assessment.proposal;
+  // On time is mint, a delay that still works is yellow, and a risk or a cancellation is coral.
+  const tone = assessment.status === 'on_time' ? colors.mint : assessment.status === 'delayed_still_ok' ? colors.primary : assessment.status === 'not_on_board' ? colors.dim : colors.coral;
 
   async function approve(p: WakeAlternative) {
     const newNativeId = randomUUID();
@@ -76,7 +78,10 @@ export function JourneyCard() {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.eyebrow}>Your journey</Text>
+      <View style={styles.eyebrowRow}>
+        <View style={[styles.statusDot, { backgroundColor: tone, shadowColor: tone }]} />
+        <Text style={styles.eyebrow}>Your journey</Text>
+      </View>
       <Text style={styles.headline}>{text.headline}</Text>
       <Text style={styles.body}>{error ?? text.detail}</Text>
       {proposal ? (
@@ -103,6 +108,8 @@ export function JourneyCard() {
 
 const styles = StyleSheet.create({
   wrap: { gap: space.sm, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: colors.ink },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusDot: { width: 10, height: 10, borderRadius: 5, shadowOpacity: 0.9, shadowRadius: 6, shadowOffset: { width: 0, height: 0 } },
   eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   headline: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
   body: { color: colors.muted, fontSize: 15, lineHeight: 21 },

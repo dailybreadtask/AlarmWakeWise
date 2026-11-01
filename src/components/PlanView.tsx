@@ -68,7 +68,7 @@ export function PlanView({ outcome, timezone, assumptions, onChange, onStartTime
                 <Text style={styles.entryTitle}>{entry.label}</Text>
                 {entry.source === 'estimated' ? <Text style={styles.note}>Estimate, you can change it</Text> : null}
                 {entry.source === 'user' && entry.kind !== 'arrive' ? <Text style={styles.note}>{entry.minutes} min, from you</Text> : null}
-                {entry.kind === 'arrive' ? <Text style={styles.note}>{entry.minutes} min spare</Text> : null}
+                {entry.kind === 'arrive' ? <Text style={[styles.note, styles.noteOk]}>{entry.minutes} min spare</Text> : null}
                 {entry.kind === 'timer' ? <Text style={styles.note}>{entry.minutes} min timer</Text> : null}
                 {entry.kind === 'timer' && onStartTimer ? (
                   <PressScale onPress={() => onStartTimer(entry)} style={styles.timerButton} accessibilityRole="button" accessibilityLabel={`Start the ${entry.label} timer`}>
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   dotArrive: { borderRadius: 3, backgroundColor: colors.ink },
   entry: { flex: 1, paddingLeft: space.sm, gap: 2, paddingBottom: space.md },
   entryTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
+  noteOk: { color: colors.mint },
   note: { color: colors.quiet, fontSize: 14, lineHeight: 19 },
   sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '600' },
   stepper: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, paddingVertical: space.md, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },

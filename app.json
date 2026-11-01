@@ -40,7 +40,16 @@
           "microphonePermission": "WakeWise uses the microphone so you can say what you need instead of typing it. Audio is sent to our speech service only after you allow it."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#01010D",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 300,
+          "resizeMode": "contain"
+        }
+      ]
     ],
     "scheme": "wakewise",
     "experiments": {

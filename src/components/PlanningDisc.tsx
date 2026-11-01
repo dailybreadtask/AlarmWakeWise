@@ -11,9 +11,9 @@ const SIZE = N * CELL;
 /**
  * A disc made of dots. By default it fills in clockwise as a plan is worked out: at 100 the whole disc is lit and the
  * middle turns yellow. With `drain`, `progress` is the share of a countdown that has passed: the dots go out clockwise
- * from the top, and the middle stays yellow until the end. `progress` runs from 0 to 100. `size` is the width and height in points; the disc scales to fit.
+ * from the top, and the middle stays yellow until the end. `progress` runs from 0 to 100. `size` is the width and height in points; the disc scales to fit. `litColor` tints the lit dots, for example in the assistant's indigo.
  */
-export function PlanningDisc({ progress, drain = false, size = SIZE }: { progress: number; drain?: boolean; size?: number }) {
+export function PlanningDisc({ progress, drain = false, size = SIZE, litColor }: { progress: number; drain?: boolean; size?: number; litColor?: string }) {
   const { c } = useTheme();
   const dots = [];
   for (let y = 0; y < N; y++) {
@@ -34,7 +34,7 @@ export function PlanningDisc({ progress, drain = false, size = SIZE }: { progres
           cx={x * CELL + CELL / 2}
           cy={y * CELL + CELL / 2}
           r={size / 2}
-          fill={core ? c.primary : lit ? c.ink : inDisc ? c.faint : c.border}
+          fill={core ? c.primary : lit ? (litColor ?? c.ink) : inDisc ? c.faint : c.border}
           stroke={core ? c.ink : undefined}
           strokeWidth={core ? 1 : 0}
         />,
