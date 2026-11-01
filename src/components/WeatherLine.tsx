@@ -1,16 +1,17 @@
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { colors } from '../theme/tokens';
+import { colors, useTheme } from '../theme/tokens';
 import { WEATHER_LEGAL_URL, type WeatherSummary } from '../weather/weatherClient';
 
 /** Today's weather in one short line, for example 8° and "Rain until 10", with Apple's credit. Nothing until there is weather. */
 export function WeatherLine({ summary }: { summary: WeatherSummary | null }) {
+  const { c } = useTheme();
   if (!summary) return null;
   return (
     <View style={styles.wrap}>
       <View style={styles.row} accessibilityLabel={`Weather: ${Math.round(summary.temperatureC)} degrees, ${summary.text}`}>
-        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
           <Path d="M7 15a4 4 0 1 1 1.5-7.7A5 5 0 0 1 18 9a3 3 0 0 1 0 6z" />
           <Path d="M9 18l-1 2M13 18l-1 2M17 18l-1 2" />
         </Svg>

@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { WAKE_SOUNDS, type WakeSound, type WakeSoundCategory } from '../sound/wakeSounds';
-import { colors, space } from '../theme/tokens';
+import { colors, space, useTheme } from '../theme/tokens';
 
 interface Props {
   selectedId: string;
@@ -23,6 +23,7 @@ const GROUPS: { category: WakeSoundCategory; title: string }[] = [
  * and the button on the right plays or stops a tone without changing the choice. Previews are the tones the alarm plays.
  */
 export function SoundChoice({ selectedId, onSelect }: Props) {
+  const { c } = useTheme();
   const selected = WAKE_SOUNDS.find((s) => s.id === selectedId) ?? WAKE_SOUNDS[0];
   // One player for the whole list, so only one tone sounds at a time and a new tap replaces the last.
   const player = useAudioPlayer();
@@ -84,7 +85,7 @@ export function SoundChoice({ selectedId, onSelect }: Props) {
                       accessibilityLabel={playing ? `Stop ${sound.name}` : `Play ${sound.name}`}
                       hitSlop={6}
                     >
-                      <Svg width={16} height={16} viewBox="0 0 24 24" fill={colors.ink}>
+                      <Svg width={16} height={16} viewBox="0 0 24 24" fill={playing ? c.onPrimary : c.ink}>
                         {playing ? <Path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /> : <Path d="M8 5.5v13l11-6.5z" />}
                       </Svg>
                     </Pressable>
@@ -107,12 +108,12 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 60 },
   rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 60 },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#9A9A94', alignItems: 'center', justifyContent: 'center' },
-  radioOn: { borderColor: colors.ink, backgroundColor: colors.primary },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ink },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.faint, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.onPrimary },
   text: { flex: 1, gap: 2 },
   name: { color: colors.ink, fontSize: 16, fontWeight: '500' },
   caption: { color: colors.muted, fontSize: 13 },
-  play: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
-  playOn: { backgroundColor: colors.primary, borderColor: colors.ink },
+  play: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card },
+  playOn: { backgroundColor: colors.primary, borderColor: colors.primary },
 });

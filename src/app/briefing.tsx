@@ -14,7 +14,7 @@ import { listPlans, loadTimeline } from '../plans/planRepository';
 import { useTodayWeather } from '../weather/useTodayWeather';
 import { stepDoneLabel, stepNote } from '../plans/stepNote';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space } from '../theme/tokens';
+import { colors, glow, space } from '../theme/tokens';
 
 const clock = (at: Date) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(at);
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.xl },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   greeting: { color: colors.ink, fontSize: 17, fontWeight: '600' },
-  sub: { color: '#5E5E59', fontSize: 15, fontVariant: ['tabular-nums'] },
+  sub: { color: colors.quiet, fontSize: 15, fontVariant: ['tabular-nums'] },
   right: { textAlign: 'right' },
   lines: { gap: space.md },
   lineBlock: { gap: 2 },
@@ -212,22 +212,22 @@ const styles = StyleSheet.create({
   textButton: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
   textButtonText: { color: colors.ink, fontSize: 15, textDecorationLine: 'underline' },
   leave: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: colors.ink, paddingTop: 14 },
-  countdown: { color: colors.ink, fontSize: 76, fontWeight: '100', letterSpacing: -4.5, lineHeight: 80, fontVariant: ['tabular-nums'] },
-  now: { backgroundColor: colors.ink, borderRadius: 28, padding: 20, minHeight: 176, gap: 6 },
+  countdown: { color: colors.ink, fontSize: 76, fontWeight: '100', letterSpacing: -4.5, lineHeight: 80, fontVariant: ['tabular-nums'], ...glow },
+  now: { backgroundColor: colors.card, borderRadius: 28, padding: 20, minHeight: 176, gap: 6, borderWidth: 1, borderColor: 'rgba(245,231,75,0.45)', shadowColor: colors.primary, shadowOpacity: 0.25, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   nowKicker: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  nowTime: { color: colors.paper, fontSize: 15, fontVariant: ['tabular-nums'] },
-  nowTitle: { color: colors.paper, fontSize: 30, fontWeight: '500', letterSpacing: -0.8, lineHeight: 32 },
-  nowNote: { color: '#D6D6D0', fontSize: 16, lineHeight: 22, marginTop: 4 },
-  next: { backgroundColor: colors.card, borderRadius: 24, borderWidth: 1, borderColor: '#ECECE7', padding: 18, gap: 4, marginTop: -space.md, marginHorizontal: space.sm },
-  nextKicker: { color: '#5E5E59', fontSize: 14, fontWeight: '600' },
+  nowTime: { color: colors.ink, fontSize: 15, fontVariant: ['tabular-nums'] },
+  nowTitle: { color: colors.ink, fontSize: 30, fontWeight: '500', letterSpacing: -0.8, lineHeight: 32 },
+  nowNote: { color: colors.quiet, fontSize: 16, lineHeight: 22, marginTop: 4 },
+  next: { backgroundColor: colors.card, borderRadius: 24, borderWidth: 1, borderColor: colors.border, padding: 18, gap: 4, marginTop: -space.md, marginHorizontal: space.sm },
+  nextKicker: { color: colors.quiet, fontSize: 14, fontWeight: '600' },
   nextTime: { color: colors.ink, fontSize: 15, fontVariant: ['tabular-nums'] },
   nextTitle: { color: colors.ink, fontSize: 20, fontWeight: '500' },
   footer: { paddingHorizontal: space.xl, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },
   footerRow: { flexDirection: 'row', gap: 10 },
-  skip: { minHeight: 58, paddingHorizontal: 22, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  skip: { minHeight: 58, paddingHorizontal: 22, borderRadius: 29, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   skipText: { color: colors.ink, fontSize: 17 },
-  done: { flex: 1, minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  done: { flex: 1, minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   doneText: { color: colors.ink, fontSize: 18, fontWeight: '600' },
   leaveButton: { minHeight: 58, borderRadius: 29, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   leaveButtonText: { color: colors.paper, fontSize: 18, fontWeight: '600' },

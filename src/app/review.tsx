@@ -260,6 +260,6 @@ const styles = StyleSheet.create({
   body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
   block: { gap: 12 },
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  change: { minHeight: 58, paddingHorizontal: 24, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  change: { minHeight: 58, paddingHorizontal: 24, borderRadius: 29, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   changeText: { color: colors.ink, fontSize: 17 },
 });

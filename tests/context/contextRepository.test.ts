@@ -82,6 +82,14 @@ describe('alarm tone preference', () => {
     expect((await loadPreferences(db)).soundId).toBe('pulse');
   });
 
+  it('keeps the appearance, with night as the default, and refuses one that does not exist', async () => {
+    const db = memoryDb();
+    expect((await loadPreferences(db)).appearance).toBe('night');
+    await savePreference(db, 'appearance', 'day', at);
+    expect((await loadPreferences(db)).appearance).toBe('day');
+    await expect(savePreference(db, 'appearance', 'sepia', at)).rejects.toThrow(/Unknown/);
+  });
+
   it('keeps the wake mode, challenge and difficulty, and refuses ones that do not exist', async () => {
     const db = memoryDb();
     expect(await loadPreferences(db)).toMatchObject({ wakeMode: 'challenge', challengeType: 'maths', challengeLevel: 1 });

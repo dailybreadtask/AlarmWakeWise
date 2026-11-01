@@ -67,7 +67,7 @@ export function CollapsibleLine({ title, value, open, onToggle, children }: Line
 
 const styles = StyleSheet.create({
   wrap: { borderBottomWidth: 1 },
-  closed: { borderBottomColor: '#CFCFC9' },
+  closed: { borderBottomColor: colors.hairline },
   open: { borderBottomColor: colors.ink },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
   title: { color: colors.ink, fontSize: 17 },

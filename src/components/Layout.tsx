@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
-import { colors, space } from '../theme/tokens';
+import { colors, space, useTheme } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
 /**
@@ -13,12 +13,13 @@ import { PressScale } from './PressScale';
  */
 export function Page({ title, children, footer, back = true }: { title: string; children: ReactNode; footer?: ReactNode; back?: boolean }) {
   const insets = useSafeAreaInsets();
+  const { c } = useTheme();
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         {back ? (
           <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={2} strokeLinecap="round">
               <Path d="M15 6l-6 6 6 6" />
             </Svg>
             <Text style={styles.title}>{title}</Text>
@@ -75,7 +76,7 @@ export function SwitchLine({ title, detail, value, onChange, disabled }: { title
     <ControlLine
       title={title}
       detail={detail}
-      right={<Switch value={value} disabled={disabled} onValueChange={onChange} trackColor={{ false: '#DADAD4', true: colors.ink }} thumbColor={colors.primary} accessibilityLabel={title} />}
+      right={<Switch value={value} disabled={disabled} onValueChange={onChange} trackColor={{ false: colors.raised, true: colors.dim }} thumbColor={value ? colors.primary : colors.faint} accessibilityLabel={title} />}
     />
   );
 }
@@ -85,7 +86,7 @@ export function Field({ label, error, ...input }: { label: string; error?: strin
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput placeholderTextColor={colors.muted} accessibilityLabel={label} {...input} style={[styles.input, input.style]} />
+      <TextInput keyboardAppearance="dark" selectionColor={colors.primary} placeholderTextColor={colors.muted} accessibilityLabel={label} {...input} style={[styles.input, input.style]} />
       {error ? (
         <Text style={styles.error} accessibilityRole="alert">
           {error}
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: space.xl, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },
   intro: { color: colors.muted, fontSize: 15, lineHeight: 21 },
   section: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  line: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.hairline },
   lineText: { flex: 1, gap: 2 },
   lineTitle: { color: colors.ink, fontSize: 17 },
   lineDetail: { color: colors.muted, fontSize: 14, lineHeight: 19 },
@@ -160,12 +161,12 @@ const styles = StyleSheet.create({
   options: { flexDirection: 'row', gap: space.lg },
   option: { minHeight: 44, justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   optionOn: { borderBottomColor: colors.ink },
-  optionText: { color: '#8A8A84', fontSize: 17 },
+  optionText: { color: colors.dim, fontSize: 17 },
   optionTextOn: { color: colors.ink, fontWeight: '500' },
-  optionTextOff: { color: '#C2C2BC' },
-  primary: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  optionTextOff: { color: colors.faint },
+  primary: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   primaryText: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
-  secondary: { minHeight: 58, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
+  secondary: { minHeight: 58, borderRadius: 29, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
   secondaryText: { color: colors.ink, fontSize: 17 },
   link: { minHeight: 44, justifyContent: 'center' },
   linkText: { color: colors.ink, fontSize: 15, textDecorationLine: 'underline' },

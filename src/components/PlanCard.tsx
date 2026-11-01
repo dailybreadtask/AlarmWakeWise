@@ -62,9 +62,9 @@ export function PlanCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.ink, borderRadius: 28, padding: 20, gap: space.sm },
+  card: { backgroundColor: colors.card, borderRadius: 28, padding: 20, gap: space.sm, borderWidth: 1, borderColor: colors.border },
   kicker: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-  title: { color: colors.paper, fontSize: 24, fontWeight: '500', letterSpacing: -0.6, lineHeight: 28 },
+  title: { color: colors.ink, fontSize: 24, fontWeight: '500', letterSpacing: -0.6, lineHeight: 28 },
   facts: { gap: 2, marginTop: space.xs },
-  fact: { color: '#D6D6D0', fontSize: 15 },
+  fact: { color: colors.quiet, fontSize: 15 },
 });

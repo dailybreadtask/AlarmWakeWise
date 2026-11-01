@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CollapsibleLine, Line } from '../components/CollapsibleLine';
 import { CREATE_ALARM_MESSAGES, createAlarm, rescheduleAlarm } from '../alarm/createAlarm';
+import { Glow } from '../components/Glow';
 import { PressScale } from '../components/PressScale';
 import { Ruler } from '../components/Ruler';
 import { SoundChoice } from '../components/SoundChoice';
@@ -15,7 +16,7 @@ import { nextOccurrence } from '../domain/time';
 import { DEFAULT_WAKE_SOUND_ID, soundById } from '../sound/wakeSounds';
 import { getAlarm, type SavedAlarm } from '../storage/alarmRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space } from '../theme/tokens';
+import { colors, glow, space } from '../theme/tokens';
 
 const DEFAULT_MINUTES = 7 * 60;
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -116,6 +117,7 @@ export default function NewAlarmScreen() {
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
+          <Glow style={styles.glowPool} />
           <Text style={styles.time} accessibilityLabel={`Alarm time ${pad(hour)}:${pad(minute)}`}>
             {pad(hour)}
             <Text style={styles.colon}>:</Text>
@@ -148,7 +150,7 @@ export default function NewAlarmScreen() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Label</Text>
-          <TextInput value={label} onChangeText={setLabel} placeholder="Alarm" placeholderTextColor={colors.muted} accessibilityLabel="Label" maxLength={40} style={styles.input} />
+          <TextInput keyboardAppearance="dark" selectionColor={colors.primary} value={label} onChangeText={setLabel} placeholder="Alarm" placeholderTextColor={colors.muted} accessibilityLabel="Label" maxLength={40} style={styles.input} />
         </View>
 
         <View>
@@ -182,8 +184,9 @@ const styles = StyleSheet.create({
   title: { color: colors.ink, fontSize: 17, fontWeight: '600' },
   body: { paddingHorizontal: space.xl, paddingBottom: space.xl, gap: space.xl },
   hero: { gap: space.sm },
-  time: { color: colors.ink, fontSize: 132, fontWeight: '100', letterSpacing: -8.6, lineHeight: 144, marginLeft: -5, fontVariant: ['tabular-nums'] },
-  colon: { color: '#9A9A94' },
+  glowPool: { left: -110, top: -150 },
+  time: { color: colors.ink, fontSize: 132, fontWeight: '100', letterSpacing: -8.6, lineHeight: 144, marginLeft: -5, fontVariant: ['tabular-nums'], ...glow },
+  colon: { color: colors.faint },
   countdown: { color: colors.muted, fontSize: 17 },
   countdownStrong: { color: colors.ink, fontWeight: '500' },
   field: { gap: space.sm },

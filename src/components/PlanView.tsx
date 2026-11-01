@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { PressScale } from './PressScale';
 
 import type { PlanOutcome, TimelineEntry } from '../domain/planner';
-import { colors, radius, space } from '../theme/tokens';
+import { colors, glow, radius, space } from '../theme/tokens';
 
 const clock = (at: Date, timezone: string) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timezone }).format(at);
 const fullDay = (at: Date, timezone: string) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: timezone }).format(at);
@@ -112,15 +112,15 @@ const DOT = 14;
 const styles = StyleSheet.create({
   wrap: { gap: space.xl },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
-  date: { color: '#5E5E59', fontSize: 15, flexShrink: 1 },
+  date: { color: colors.quiet, fontSize: 15, flexShrink: 1 },
   pill: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.ink, justifyContent: 'center' },
   pillText: { color: colors.paper, fontSize: 14, fontWeight: '500' },
   wakeBlock: { gap: 0 },
-  wakeCaption: { color: '#5E5E59', fontSize: 17 },
-  display: { color: colors.ink, fontSize: 132, fontWeight: '100', letterSpacing: -8.6, lineHeight: 116, marginLeft: -5, fontVariant: ['tabular-nums'] },
+  wakeCaption: { color: colors.quiet, fontSize: 17 },
+  display: { color: colors.ink, fontSize: 132, fontWeight: '100', letterSpacing: -8.6, lineHeight: 116, marginLeft: -5, fontVariant: ['tabular-nums'], ...glow },
   timeline: { position: 'relative', marginTop: space.sm },
   // The spine runs behind the dots, from the first row's dot to the last row's.
-  spine: { position: 'absolute', left: 71, top: 14, bottom: 14, width: 1, backgroundColor: '#CFCFC9' },
+  spine: { position: 'absolute', left: 71, top: 14, bottom: 14, width: 1, backgroundColor: colors.hairline },
   row: { flexDirection: 'row', alignItems: 'flex-start', minHeight: 56 },
   time: { width: 52, color: colors.ink, fontSize: 17, fontWeight: '300', fontVariant: ['tabular-nums'], paddingTop: 1 },
   dot: { width: DOT, height: DOT, marginLeft: 13, marginRight: 4, marginTop: 4 },
@@ -129,13 +129,13 @@ const styles = StyleSheet.create({
   dotArrive: { borderRadius: 3, backgroundColor: colors.ink },
   entry: { flex: 1, paddingLeft: space.sm, gap: 2, paddingBottom: space.md },
   entryTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
-  note: { color: '#5E5E59', fontSize: 14, lineHeight: 19 },
+  note: { color: colors.quiet, fontSize: 14, lineHeight: 19 },
   sectionTitle: { color: colors.ink, fontSize: 17, fontWeight: '600' },
-  stepper: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: '#ECECE7', paddingVertical: space.md, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },
+  stepper: { backgroundColor: colors.card, borderRadius: 18, borderWidth: 1, borderColor: colors.border, paddingVertical: space.md, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm },
   label: { color: colors.ink, fontSize: 16, fontWeight: '500' },
   stepperControls: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  stepButton: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  stepButton: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   stepText: { color: colors.ink, fontSize: 18 },
   stepValue: { color: colors.ink, fontSize: 14, fontWeight: '500', minWidth: 64, textAlign: 'center' },
-  timerButton: { alignSelf: 'flex-start', marginTop: space.xs, borderWidth: 1, borderColor: '#CFCFC9', borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: space.md, backgroundColor: colors.card },
+  timerButton: { alignSelf: 'flex-start', marginTop: space.xs, borderWidth: 1, borderColor: colors.hairline, borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: space.md, backgroundColor: colors.card },
 });

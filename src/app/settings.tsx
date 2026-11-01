@@ -4,12 +4,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 
 import { CollapsibleLine, Line } from '../components/CollapsibleLine';
-import { Intro, Lines, Page, SectionLabel } from '../components/Layout';
+import { Intro, Lines, Options, Page, SectionLabel } from '../components/Layout';
 import { SoundChoice } from '../components/SoundChoice';
 import { LEVEL_NAMES } from '../challenge/sums';
-import { loadPreferences, savePreference, type Preferences } from '../context/contextRepository';
+import { loadPreferences, savePreference, type Appearance, type Preferences } from '../context/contextRepository';
 import { soundById, type WakeSound } from '../sound/wakeSounds';
 import { sqlFrom } from '../storage/sqlAdapter';
+import { applyAppearance } from '../theme/appearance';
 import { colors } from '../theme/tokens';
 
 /** Settings: the alarm tone you want by default, and the privacy choices. Tap a tone to hear it; the choice is saved. */
@@ -36,6 +37,13 @@ export default function SettingsScreen() {
     }, [sql]),
   );
 
+  async function chooseAppearance(choice: Appearance) {
+    setPrefs((p) => (p ? { ...p, appearance: choice } : p));
+    // The whole app changes at once. The choice is saved so it is applied on the next start too.
+    applyAppearance(choice);
+    await savePreference(sql, 'appearance', choice, new Date().toISOString());
+  }
+
   async function choose(sound: WakeSound) {
     setSoundId(sound.id);
     await savePreference(sql, 'soundId', sound.id, new Date().toISOString());
@@ -45,6 +53,21 @@ export default function SettingsScreen() {
   return (
     <Page title="Settings">
       <Intro>Defaults for new alarms. Volume and vibration are set by iOS, not by the app.</Intro>
+
+      <SectionLabel>Appearance</SectionLabel>
+      {prefs ? (
+        <Options<Appearance>
+          label="Appearance"
+          options={[
+            { value: 'night', label: 'Night' },
+            { value: 'day', label: 'Day' },
+            { value: 'auto', label: 'Automatic' },
+          ]}
+          value={prefs.appearance}
+          onChange={(v) => void chooseAppearance(v)}
+        />
+      ) : null}
+      <Text style={styles.note}>Night is easiest on the eyes in the dark. Automatic follows your iPhone.</Text>
 
       <SectionLabel>Alarms</SectionLabel>
       <Lines>
@@ -70,4 +93,5 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   message: { color: colors.ink, fontSize: 14, lineHeight: 19 },
+  note: { color: colors.muted, fontSize: 14, lineHeight: 19, marginTop: -12 },
 });

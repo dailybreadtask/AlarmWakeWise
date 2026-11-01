@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { colors } from '../theme/tokens';
+import { colors, useTheme } from '../theme/tokens';
 
 const HEIGHT = 84;
 
@@ -33,6 +33,7 @@ export interface RulerProps {
  * small ticks make the scale readable at a glance. The pointer is a yellow dot on a line. Each tick crossed gives a light haptic.
  */
 export function Ruler({ value, min, max, onChange, tickWidth = 12, major, medium, labelEvery, format = String, accessibilityLabel, valueText }: RulerProps) {
+  const { c } = useTheme();
   const scroller = useRef<ScrollView>(null);
   const [width, setWidth] = useState(0);
   // True only while the person's finger (or its momentum) is moving the ruler, so a move we make ourselves is not reported.
@@ -126,7 +127,7 @@ export function Ruler({ value, min, max, onChange, tickWidth = 12, major, medium
             <Svg width={count * tickWidth} height={HEIGHT}>
               {paths.small ? <Path d={paths.small} stroke="#8A8A84" strokeWidth={1} /> : null}
               {paths.mid ? <Path d={paths.mid} stroke="#8A8A84" strokeWidth={1} /> : null}
-              {paths.long ? <Path d={paths.long} stroke={colors.ink} strokeWidth={1} /> : null}
+              {paths.long ? <Path d={paths.long} stroke={c.ink} strokeWidth={1} /> : null}
             </Svg>
             {labels.map((l) => (
               <Text key={l.key} style={[styles.label, { left: l.left }]}>

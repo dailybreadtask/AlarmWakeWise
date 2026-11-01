@@ -19,7 +19,7 @@ import { parseRequest, type ParseResult } from '../intent/parseClient';
 import { sqlFrom } from '../storage/sqlAdapter';
 import type { TranscriptionResult } from '../speech/transcribeClient';
 import { useVoiceCapture } from '../speech/useVoiceCapture';
-import { colors, space } from '../theme/tokens';
+import { colors, space, useTheme } from '../theme/tokens';
 
 const SUGGESTIONS = ['Get me to work for 9, with a run first', 'Bake a cake by noon', 'Study for Friday’s exam'];
 
@@ -45,6 +45,7 @@ export default function CaptureScreen() {
   const { hasConsent } = useConsent();
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
+  const { c } = useTheme();
   const voiceReady = speechConfig.baseUrl !== '';
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(!voiceReady);
@@ -121,7 +122,7 @@ export default function CaptureScreen() {
         ) : (
           <>
             <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={2} strokeLinecap="round">
                 <Path d="M15 6l-6 6 6 6" />
               </Svg>
               <Text style={styles.headerTitle}>{word}</Text>
@@ -159,7 +160,7 @@ export default function CaptureScreen() {
           <ScrollView style={styles.middle} contentContainerStyle={styles.middleContent} keyboardShouldPersistTaps="handled">
             <Text style={styles.question}>What’s {word.toLowerCase()} for?</Text>
             {typing ? (
-              <TextInput
+              <TextInput keyboardAppearance="dark" selectionColor={colors.primary}
                 style={styles.typed}
                 multiline
                 autoFocus
@@ -234,11 +235,11 @@ export default function CaptureScreen() {
                 {busy ? (
                   <Text style={styles.micBusy}>…</Text>
                 ) : recording ? (
-                  <Svg width={20} height={20} viewBox="0 0 24 24" fill={colors.ink}>
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill={colors.onPrimary}>
                     <Rect x={6} y={6} width={12} height={12} rx={2} />
                   </Svg>
                 ) : (
-                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={2} strokeLinecap="round">
                     <Rect x={9} y={3} width={6} height={12} rx={3} />
                     <Path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
                   </Svg>
@@ -246,7 +247,7 @@ export default function CaptureScreen() {
               </PressScale>
 
               <Pressable onPress={() => setTyping((t) => !t)} accessibilityRole="button" accessibilityLabel={typing ? 'Hide the keyboard' : 'Type instead'} accessibilityState={{ selected: typing }} style={[styles.keys, typing && styles.keysOn]}>
-                <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={1.6} strokeLinecap="round">
+                <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={1.6} strokeLinecap="round">
                   <Rect x={3} y={6} width={18} height={12} rx={2} />
                   <Path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8" />
                 </Svg>
@@ -279,7 +280,7 @@ function Check({ title, note, done }: { title: string; note: string; done?: bool
     <View style={styles.check}>
       <View style={[styles.mark, done && styles.markDone]}>
         {done ? (
-          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
             <Path d="M5 12.5l4.5 4.5L19 7.5" />
           </Svg>
         ) : null}
@@ -300,17 +301,17 @@ const styles = StyleSheet.create({
   headerText: { gap: 2 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, marginLeft: -6 },
   headerTitle: { color: colors.ink, fontSize: 17, fontWeight: '600' },
-  sub: { color: '#5E5E59', fontSize: 15 },
+  sub: { color: colors.quiet, fontSize: 15 },
   planTitle: { color: colors.ink, fontSize: 30, fontWeight: '600', letterSpacing: -0.8 },
   middle: { flex: 1 },
   middleContent: { flexGrow: 1, paddingHorizontal: space.xl, justifyContent: 'center', gap: 18 },
-  question: { color: '#5E5E59', fontSize: 17 },
+  question: { color: colors.quiet, fontSize: 17 },
   words: { flexDirection: 'row', flexWrap: 'wrap' },
   word: { color: colors.ink, fontSize: 36, fontWeight: '500', letterSpacing: -1, lineHeight: 40 },
   typed: { color: colors.ink, fontSize: 36, fontWeight: '500', letterSpacing: -1, lineHeight: 40, minHeight: 120, padding: 0, textAlignVertical: 'top' },
   suggestions: { gap: 4 },
-  hint: { color: '#5E5E59', fontSize: 15, marginBottom: space.sm },
-  suggestion: { minHeight: 48, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  hint: { color: colors.quiet, fontSize: 15, marginBottom: space.sm },
+  suggestion: { minHeight: 48, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: colors.hairline },
   suggestionText: { color: colors.ink, fontSize: 17 },
   footer: { paddingHorizontal: space.xl, paddingTop: 22, gap: 14 },
   notice: { color: colors.ink, fontSize: 14, lineHeight: 19 },
@@ -318,27 +319,27 @@ const styles = StyleSheet.create({
   plan: { minHeight: 58, borderRadius: 29, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   planText: { color: colors.paper, fontSize: 18, fontWeight: '600' },
   controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  restart: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FBE3DF', alignItems: 'center', justifyContent: 'center' },
-  restartMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: '#D9381E' },
-  mic: { width: 120, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  restart: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(253,110,136,0.16)', alignItems: 'center', justifyContent: 'center' },
+  restartMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: colors.coral },
+  mic: { width: 120, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   micBusy: { color: colors.ink, fontSize: 22 },
-  keys: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: '#CFCFC9', backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
+  keys: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: colors.hairline, backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
   keysOn: { borderColor: colors.ink },
   disabled: { opacity: 0.4 },
   planning: { flex: 1, paddingTop: 26 },
   pips: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 24, marginHorizontal: space.xl },
-  pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#C9C9C3' },
+  pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   pipOn: { backgroundColor: colors.ink },
   checks: { marginTop: 24, marginHorizontal: space.xl, gap: 2 },
   check: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
-  mark: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: '#8A8A84', alignItems: 'center', justifyContent: 'center' },
-  markDone: { backgroundColor: colors.primary, borderStyle: 'solid', borderColor: colors.ink },
+  mark: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.dim, alignItems: 'center', justifyContent: 'center' },
+  markDone: { backgroundColor: colors.primary, borderStyle: 'solid', borderColor: colors.primary },
   checkText: { flex: 1 },
   checkTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
-  checkNote: { color: '#5E5E59', fontSize: 14 },
+  checkNote: { color: colors.quiet, fontSize: 14 },
   planningFooter: { marginTop: 'auto', paddingHorizontal: space.xl, paddingBottom: 40, gap: 10 },
-  seePlan: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  seePlan: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   seePlanText: { color: colors.ink, fontSize: 18, fontWeight: '600' },
   textButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  textButtonText: { color: '#5E5E59', fontSize: 15 },
+  textButtonText: { color: colors.quiet, fontSize: 15 },
 });

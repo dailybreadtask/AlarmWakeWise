@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { colors } from '../theme/tokens';
+import { useTheme } from '../theme/tokens';
 
 const N = 17;
 const CELL = 14;
@@ -14,6 +14,7 @@ const SIZE = N * CELL;
  * from the top, and the middle stays yellow until the end. `progress` runs from 0 to 100. `size` is the width and height in points; the disc scales to fit.
  */
 export function PlanningDisc({ progress, drain = false, size = SIZE }: { progress: number; drain?: boolean; size?: number }) {
+  const { c } = useTheme();
   const dots = [];
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
@@ -33,8 +34,8 @@ export function PlanningDisc({ progress, drain = false, size = SIZE }: { progres
           cx={x * CELL + CELL / 2}
           cy={y * CELL + CELL / 2}
           r={size / 2}
-          fill={core ? colors.primary : lit ? colors.ink : inDisc ? '#A9A9A3' : '#D2D2CC'}
-          stroke={core ? colors.ink : undefined}
+          fill={core ? c.primary : lit ? c.ink : inDisc ? c.faint : c.border}
+          stroke={core ? c.ink : undefined}
           strokeWidth={core ? 1 : 0}
         />,
       );

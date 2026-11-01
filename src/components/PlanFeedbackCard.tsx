@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   title: { color: colors.ink, fontSize: 20, fontWeight: '500', letterSpacing: -0.3 },
   body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
-  choice: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderTopWidth: 1, borderTopColor: '#CFCFC9' },
+  choice: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderTopWidth: 1, borderTopColor: colors.hairline },
   choiceText: { flex: 1, color: colors.ink, fontSize: 17 },
-  chevron: { color: '#8A8A84', fontSize: 22 },
+  chevron: { color: colors.dim, fontSize: 22 },
 });

@@ -16,7 +16,7 @@ import { expoReminderBridge } from '../reminders/expoReminders';
 import { sqlFrom } from '../storage/sqlAdapter';
 import { listTimers, setTimerStatus, type SavedTimer } from '../timers/timerRepository';
 import { cancelTimer, durationWords, startTimer, TIMER_PRESETS } from '../timers/timerService';
-import { colors, space } from '../theme/tokens';
+import { colors, glow, space, useTheme } from '../theme/tokens';
 
 /** A clock time, with seconds when the timer is short enough for them to matter. */
 const clockExact = (at: string | Date, withSeconds: boolean) =>
@@ -70,6 +70,7 @@ interface TimerView {
 export default function TimersScreen() {
   const db = useSQLiteContext();
   const insets = useSafeAreaInsets();
+  const { c } = useTheme();
   const sql = useMemo(() => sqlFrom(db), [db]);
   const [timers, setTimers] = useState<SavedTimer[]>([]);
   const [label, setLabel] = useState('');
@@ -179,7 +180,7 @@ export default function TimersScreen() {
 
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={c.ink} strokeWidth={2} strokeLinecap="round">
             <Path d="M15 6l-6 6 6 6" />
           </Svg>
           <Text style={styles.title}>Timers</Text>
@@ -270,7 +271,7 @@ export default function TimersScreen() {
 
           <View style={styles.field}>
             <Text style={styles.label}>Name</Text>
-            <TextInput value={label} onChangeText={setLabel} placeholder="Timer, or Bake, Tea, Study" placeholderTextColor={colors.muted} accessibilityLabel="Timer name" maxLength={40} style={styles.input} />
+            <TextInput keyboardAppearance="dark" selectionColor={colors.primary} value={label} onChangeText={setLabel} placeholder="Timer, or Bake, Tea, Study" placeholderTextColor={colors.muted} accessibilityLabel="Timer name" maxLength={40} style={styles.input} />
           </View>
 
           {message ? (
@@ -348,20 +349,20 @@ const styles = StyleSheet.create({
   pinned: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginHorizontal: space.xl, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: colors.ink },
   pinnedText: { flex: 1, gap: 2 },
   pinnedName: { color: colors.muted, fontSize: 15 },
-  pinnedTime: { color: colors.ink, fontSize: 44, fontWeight: '100', letterSpacing: -2.4, lineHeight: 48, fontVariant: ['tabular-nums'] },
+  pinnedTime: { color: colors.ink, fontSize: 44, fontWeight: '100', letterSpacing: -2.4, lineHeight: 48, fontVariant: ['tabular-nums'], ...glow },
   linkButton: { minHeight: 44, justifyContent: 'center' },
   linkText: { color: colors.ink, fontSize: 15, textDecorationLine: 'underline' },
   setupTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: -space.md },
   section: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   sectionPad: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', paddingBottom: space.sm },
   lengthBlock: { gap: space.xs },
-  length: { color: colors.ink, fontSize: 96, fontWeight: '100', letterSpacing: -5.5, lineHeight: 104, marginLeft: -4, fontVariant: ['tabular-nums'] },
+  length: { color: colors.ink, fontSize: 96, fontWeight: '100', letterSpacing: -5.5, lineHeight: 104, marginLeft: -4, fontVariant: ['tabular-nums'], ...glow },
   ends: { color: colors.muted, fontSize: 15 },
   // Common lengths as plain numerals with a rule under the chosen one, not as pills.
   presets: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   preset: { minWidth: 36, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   presetOn: { borderBottomColor: colors.ink },
-  presetText: { color: '#8A8A84', fontSize: 21, fontWeight: '200', fontVariant: ['tabular-nums'] },
+  presetText: { color: colors.dim, fontSize: 21, fontWeight: '200', fontVariant: ['tabular-nums'] },
   presetTextOn: { color: colors.ink, fontWeight: '300' },
   field: { gap: space.sm },
   label: { color: colors.muted, fontSize: 14 },
@@ -370,20 +371,20 @@ const styles = StyleSheet.create({
   empty: { color: colors.muted, fontSize: 15 },
   hero: { alignItems: 'center', alignSelf: 'stretch', gap: space.sm, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: colors.ink },
   heroName: { color: colors.muted, fontSize: 17, marginTop: space.md },
-  heroTime: { color: colors.ink, fontSize: 76, fontWeight: '100', letterSpacing: -4.5, lineHeight: 82, fontVariant: ['tabular-nums'] },
+  heroTime: { color: colors.ink, fontSize: 76, fontWeight: '100', letterSpacing: -4.5, lineHeight: 82, fontVariant: ['tabular-nums'], ...glow },
   // The words are wider than the digits, so they are set smaller to fit the screen.
   heroTimeDone: { fontSize: 52, letterSpacing: -2.5, lineHeight: 60 },
   heroSub: { color: colors.muted, fontSize: 15 },
   heroAction: { minHeight: 44, justifyContent: 'center' },
-  running: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  running: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 64, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: colors.hairline },
   runningText: { flex: 1, gap: 8 },
   runningTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   runningName: { color: colors.ink, fontSize: 17 },
   runningLeft: { color: colors.ink, fontSize: 17, fontWeight: '300', fontVariant: ['tabular-nums'] },
-  bar: { height: 2, backgroundColor: '#D6D6D2' },
+  bar: { height: 2, backgroundColor: colors.hairline },
   barFill: { height: 2, backgroundColor: colors.ink },
   footer: { paddingHorizontal: space.xl, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  bar58: { height: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  bar58: { height: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   bar58Text: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
   disabled: { opacity: 0.5 },
 });

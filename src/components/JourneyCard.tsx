@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
   headline: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
   body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
   row: { flexDirection: 'row', gap: 10, marginTop: space.xs },
-  primary: { flex: 1.4, minHeight: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  primary: { flex: 1.4, minHeight: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   primaryText: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
-  secondary: { flex: 1, minHeight: 52, borderRadius: 26, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  secondary: { flex: 1, minHeight: 52, borderRadius: 26, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   secondaryText: { color: colors.ink, fontSize: 16 },
 });

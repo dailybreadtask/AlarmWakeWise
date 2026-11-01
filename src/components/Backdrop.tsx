@@ -1,7 +1,9 @@
 import { StyleSheet, View } from 'react-native';
+
+import { colors } from '../theme/tokens';
 import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
-/** The dotted paper from the goal screens: a 12-point dot grid on a slightly darker paper. Sits behind the content. */
+/** The dotted paper from the goal screens: a 12-point dot grid on the onyx ground. Sits behind the content. */
 export function Backdrop() {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -18,4 +20,4 @@ export function Backdrop() {
 }
 
 /** The paper colour the dots sit on. */
-export const BACKDROP_PAPER = '#ECECE7';
+export const BACKDROP_PAPER = colors.paper;

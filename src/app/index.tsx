@@ -13,6 +13,7 @@ import { nextOccurrence } from '../domain/time';
 import { soundById } from '../sound/wakeSounds';
 import { dayBeingPlanned } from '../domain/planningDay';
 import { Line } from '../components/CollapsibleLine';
+import { Glow } from '../components/Glow';
 import { JourneyCard } from '../components/JourneyCard';
 import { PlanCard } from '../components/PlanCard';
 import { PlanFeedbackCard } from '../components/PlanFeedbackCard';
@@ -21,7 +22,7 @@ import { TimeTape } from '../components/TimeTape';
 import { WeatherLine } from '../components/WeatherLine';
 import { listAlarms, markAlarmCancelled, reconcileAlarms, type SavedAlarm } from '../storage/alarmRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space } from '../theme/tokens';
+import { colors, glow, space, useTheme } from '../theme/tokens';
 import { useTodayWeather } from '../weather/useTodayWeather';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -176,11 +177,19 @@ export default function HomeScreen() {
 
       <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 140 + insets.bottom }]}>
         <View style={styles.header}>
-          <Text style={styles.wordmark}>Wakewise</Text>
-          <Text style={styles.date}>{dateLine}</Text>
+          <View style={styles.flex}>
+            <Text style={styles.wordmark}>Wakewise</Text>
+            <Text style={styles.date}>{dateLine}</Text>
+          </View>
+          <PressScale style={styles.add} onPress={() => router.push('/new-alarm')} accessibilityRole="button" accessibilityLabel="New alarm">
+            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={1.8} strokeLinecap="round">
+              <Path d="M12 4v16M4 12h16" />
+            </Svg>
+          </PressScale>
         </View>
 
         <View style={styles.hero}>
+          {isReal ? <Glow style={styles.glowPool} /> : null}
           <Text style={[styles.time, !isReal && styles.timeIdle]} accessibilityLabel={isReal ? `Alarm time ${hh}:${mm}` : 'No alarm set'}>
             {hh}
             <Text style={styles.colon}>:</Text>
@@ -244,7 +253,7 @@ export default function HomeScreen() {
             <Text style={styles.promptTitle}>What’s {planned.word.toLowerCase()} for?</Text>
           </View>
           <View style={styles.promptMic}>
-            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.onPrimary} strokeWidth={2} strokeLinecap="round">
               <Rect x={9} y={3} width={6} height={12} rx={3} />
               <Path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
             </Svg>
@@ -278,8 +287,8 @@ export default function HomeScreen() {
                     value={a.status === 'scheduled'}
                     disabled={gone}
                     onValueChange={(on) => (on ? void turnOn(a) : turnOff(a))}
-                    trackColor={{ false: '#DADAD4', true: colors.ink }}
-                    thumbColor={colors.primary}
+                    trackColor={{ false: colors.raised, true: colors.dim }}
+                    thumbColor={a.status === 'scheduled' ? colors.primary : colors.faint}
                     accessibilityLabel={`${a.title} alarm at ${clock(new Date(a.wakeAt))}`}
                   />
                 </View>
@@ -297,11 +306,6 @@ export default function HomeScreen() {
         <NavItem label="Timers" icon="timer" onPress={() => router.push('/timers')} />
         <NavItem label="Insights" icon="context" onPress={() => router.push('/context')} />
         <NavItem label="Settings" icon="settings" onPress={() => router.push('/settings')} />
-        <PressScale style={styles.fab} onPress={() => router.push('/new-alarm')} accessibilityRole="button" accessibilityLabel="New alarm">
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round">
-            <Path d="M12 4v16M4 12h16" />
-          </Svg>
-        </PressScale>
       </View>
     </View>
   );
@@ -334,7 +338,8 @@ function dayWords(day: Date, now: Date): string {
 }
 
 function NavItem({ label, icon, active, onPress }: { label: string; icon: 'alarm' | 'timer' | 'context' | 'settings'; active?: boolean; onPress: () => void }) {
-  const tint = active ? colors.ink : colors.muted;
+  const { c } = useTheme();
+  const tint = active ? c.ink : c.muted;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: !!active }} style={styles.navItem}>
       <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={tint} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -368,13 +373,14 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
   container: { paddingHorizontal: space.xl, paddingTop: 62, gap: space.xl, flexGrow: 1 },
   flex: { flex: 1, gap: 2 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.md },
   wordmark: { color: colors.ink, fontSize: 17, fontWeight: '600', letterSpacing: -0.2 },
-  date: { color: colors.muted, fontSize: 15 },
+  date: { color: colors.muted, fontSize: 15, marginTop: 2 },
   caption: { color: colors.muted, fontSize: 13, lineHeight: 18 },
   hero: { marginTop: space.md, gap: space.md },
-  time: { color: colors.ink, fontSize: 152, fontWeight: '100', letterSpacing: -10, lineHeight: 168, marginLeft: -6, fontVariant: ['tabular-nums'] },
-  colon: { color: '#9A9A94' },
+  glowPool: { left: -110, top: -150 },
+  time: { color: colors.ink, fontSize: 152, fontWeight: '100', letterSpacing: -10, lineHeight: 168, marginLeft: -6, fontVariant: ['tabular-nums'], ...glow },
+  colon: { color: colors.faint },
   countdown: { color: colors.muted, fontSize: 17 },
   countdownStrong: { color: colors.ink, fontWeight: '500' },
   week: { flexDirection: 'row', gap: 4 },
@@ -385,27 +391,28 @@ const styles = StyleSheet.create({
   dayOn: { backgroundColor: colors.ink },
   dayText: { color: colors.paper },
   dot: { width: 5, height: 5, borderRadius: 3, marginTop: 2, backgroundColor: 'transparent' },
-  dotOn: { backgroundColor: colors.primary, borderWidth: 1, borderColor: '#B8AE1E' },
-  timeIdle: { color: '#B9B9B3' },
+  dotOn: { backgroundColor: colors.primary, borderWidth: 1, borderColor: 'rgba(245,231,75,0.55)' },
+  timeIdle: { color: colors.faint, textShadowRadius: 0 },
   setRow: { flexDirection: 'row', gap: 10 },
-  setCancel: { minHeight: 58, paddingHorizontal: 22, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  setCancel: { minHeight: 58, paddingHorizontal: 22, borderRadius: 29, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   setCancelText: { color: colors.ink, fontSize: 17 },
-  setButton: { flex: 1, minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  setButton: { flex: 1, minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   setText: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
   setDisabled: { opacity: 0.5 },
   prompt: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: colors.ink },
   promptEyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
   promptTitle: { color: colors.ink, fontSize: 26, fontWeight: '500', letterSpacing: -0.8 },
-  promptMic: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  promptMic: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ring },
   dayHeading: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', paddingBottom: space.sm },
-  alarmRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  alarmRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72, borderBottomWidth: 1, borderBottomColor: colors.hairline },
   alarmMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 72 },
-  alarmOff: { color: '#A3A39D' },
+  alarmOff: { color: colors.dim },
   alarmTime: { color: colors.ink, fontSize: 40, fontWeight: '200', letterSpacing: -1, fontVariant: ['tabular-nums'] },
   alarmTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
   nav: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingTop: 10, paddingHorizontal: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line, backgroundColor: colors.paper },
   navItem: { flex: 1, alignItems: 'center', gap: 4, minHeight: 44 },
   navLabel: { fontSize: 12, fontWeight: '500' },
   navLabelOn: { fontWeight: '600' },
-  fab: { position: 'absolute', right: space.xl, top: -40, width: 56, height: 49, borderRadius: 28, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 9, shadowOffset: { width: 0, height: 6 } },
+  // The new-alarm button sits at the top, above the clock, so it never covers the bar below.
+  add: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOpacity: 0.45, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } },
 });

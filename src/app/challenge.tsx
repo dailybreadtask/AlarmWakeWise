@@ -14,15 +14,17 @@ import { GRID, makePattern, PATTERN_LEVELS } from '../challenge/pattern';
 import { makeSum, type ChallengeLevel } from '../challenge/sums';
 import { loadPreferences, type ChallengeType } from '../context/contextRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { space } from '../theme/tokens';
+import { NIGHT as colors, space } from '../theme/tokens';
 
-// The ringing screens are dark, as in the approved design: charcoal ground, paper text, one yellow accent.
-const GROUND = '#202020';
-const PAPER = '#F5F5F2';
-const DIM = '#BDBDB6';
-const EDGE = '#4A4A46';
-const YELLOW = '#F5E74B';
+// The ringing screens are dark like the rest of the app: onyx ground, light text, one yellow accent.
+const GROUND = colors.paper;
+const PAPER = colors.ink;
+const DIM = colors.quiet;
+const EDGE = colors.hairline;
+const YELLOW = colors.primary;
 const HOLD_MS = 3000;
+/** The ringing screens are always dark, so they use the night palette whatever the setting, and keep the glow. */
+const glow = { textShadowColor: colors.glow, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 26 } as const;
 
 /**
  * The alarm was stopped. A short task, set in Wake mode, finishes waking up, and there is always a way out without it.
@@ -268,19 +270,19 @@ const styles = StyleSheet.create({
   headerDate: { color: DIM, fontSize: 15 },
   body: { flex: 1, paddingHorizontal: 28 },
   step: { color: DIM, fontSize: 15, marginTop: 40 },
-  question: { color: PAPER, fontSize: 104, fontWeight: '100', letterSpacing: -6, lineHeight: 116, marginTop: 8, fontVariant: ['tabular-nums'] },
+  question: { color: PAPER, fontSize: 104, fontWeight: '100', letterSpacing: -6, lineHeight: 116, marginTop: 8, fontVariant: ['tabular-nums'], ...glow },
   patternTitle: { color: PAPER, fontSize: 44, fontWeight: '100', letterSpacing: -2, lineHeight: 50, marginTop: 8 },
   feedback: { color: YELLOW, fontSize: 16, minHeight: 22, marginTop: 6 },
   choices: { marginTop: 'auto', marginBottom: 18, flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  choice: { width: '48.5%', height: 76, borderRadius: 24, borderWidth: 1, borderColor: EDGE, backgroundColor: '#2A2A28', alignItems: 'center', justifyContent: 'center' },
+  choice: { width: '48.5%', height: 76, borderRadius: 24, borderWidth: 1, borderColor: EDGE, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' },
   choiceText: { color: PAPER, fontSize: 34, fontWeight: '200', fontVariant: ['tabular-nums'] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'center', marginTop: 'auto', marginBottom: 18 },
-  pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#5A5A55', alignItems: 'center', justifyContent: 'center' },
+  pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.faint, alignItems: 'center', justifyContent: 'center' },
   pipLit: { width: 26, height: 26, borderRadius: 13, backgroundColor: YELLOW },
   pipTraced: { width: 26, height: 26, borderRadius: 13, backgroundColor: YELLOW, borderWidth: 2, borderColor: PAPER },
   pipNumber: { color: GROUND, fontSize: 13, fontWeight: '600' },
   footer: { paddingHorizontal: 24, gap: space.xs },
-  hold: { minHeight: 52, borderRadius: 26, borderWidth: 1, borderStyle: 'dashed', borderColor: '#6B6B66', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  hold: { minHeight: 52, borderRadius: 26, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.dim, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   holdFill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: 'rgba(245,231,75,0.22)' },
   holdText: { color: DIM, fontSize: 15 },
   link: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },

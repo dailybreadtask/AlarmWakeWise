@@ -12,7 +12,7 @@ import { DEFAULT_WAKE_SOUND_ID, soundById } from '../sound/wakeSounds';
 import { CollapsibleLine } from './CollapsibleLine';
 import { SoundChoice } from './SoundChoice';
 import { ensureAuthorized, scheduleAlarm } from '../alarm/alarmScheduler';
-import { colors, space } from '../theme/tokens';
+import { colors, glow, space } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
 type Status = 'ready' | 'setting' | 'set' | 'set_default' | 'denied' | 'unsupported' | 'failed';
@@ -138,8 +138,8 @@ export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet, foote
 
 const styles = StyleSheet.create({
   wrap: { gap: space.xl },
-  caption: { color: '#5E5E59', fontSize: 17 },
-  display: { color: colors.ink, fontSize: 112, fontWeight: '100', letterSpacing: -7.3, lineHeight: 120, marginLeft: -4, fontVariant: ['tabular-nums'] },
+  caption: { color: colors.quiet, fontSize: 17 },
+  display: { color: colors.ink, fontSize: 112, fontWeight: '100', letterSpacing: -7.3, lineHeight: 120, marginLeft: -4, fontVariant: ['tabular-nums'], ...glow },
   disabled: { opacity: 0.5 },
   message: { color: colors.ink, fontSize: 14, lineHeight: 19 },
   footer: { gap: space.sm },

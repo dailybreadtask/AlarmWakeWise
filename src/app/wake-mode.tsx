@@ -9,7 +9,7 @@ import { LEVEL_NAMES, makeSum, seededRandom, type ChallengeLevel } from '../chal
 import { Intro, Options, Page, PrimaryButton, SectionLabel } from '../components/Layout';
 import { loadPreferences, savePreference, type ChallengeType, type WakeMode } from '../context/contextRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space } from '../theme/tokens';
+import { colors, NIGHT, space } from '../theme/tokens';
 
 const HINTS: Record<ChallengeType, string[]> = {
   maths: ['Single digits, like 4 + 7', 'Two digits, like 17 + 8', 'Multiplication, like 14 × 6'],
@@ -131,22 +131,22 @@ function ModeLine({ title, detail, on, onPress }: { title: string; detail: strin
 }
 
 const styles = StyleSheet.create({
-  modeLine: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  modeLine: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 72, borderBottomWidth: 1, borderBottomColor: colors.hairline },
   modeText: { flex: 1, gap: 2 },
-  modeTitle: { color: '#8A8A84', fontSize: 24, fontWeight: '300' },
+  modeTitle: { color: colors.dim, fontSize: 24, fontWeight: '300' },
   modeTitleOn: { color: colors.ink },
   modeDetail: { color: colors.muted, fontSize: 14 },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#9A9A94', alignItems: 'center', justifyContent: 'center' },
-  radioOn: { borderColor: colors.ink, backgroundColor: colors.primary },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.ink },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: colors.faint, alignItems: 'center', justifyContent: 'center' },
+  radioOn: { borderColor: colors.primary, backgroundColor: colors.primary },
+  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.onPrimary },
   // A small dark window showing what the challenge looks like, as it will on the dark ringing screens.
-  preview: { height: 200, borderRadius: 28, backgroundColor: '#202020', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  sample: { color: '#F5F5F2', fontSize: 64, fontWeight: '100', letterSpacing: -3, fontVariant: ['tabular-nums'] },
+  preview: { height: 200, borderRadius: 28, backgroundColor: NIGHT.card, borderWidth: 1, borderColor: NIGHT.border, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  sample: { color: NIGHT.ink, fontSize: 64, fontWeight: '100', letterSpacing: -3, fontVariant: ['tabular-nums'] },
   rule: { width: 120, height: 1, backgroundColor: colors.primary },
-  previewNote: { color: '#BDBDB6', fontSize: 15 },
+  previewNote: { color: NIGHT.quiet, fontSize: 15 },
   dots: { width: 168, flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  pip: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#5A5A55' },
+  pip: { width: 6, height: 6, borderRadius: 3, backgroundColor: NIGHT.faint },
   pipOn: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
   levelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   levelLabel: { color: colors.ink, fontSize: 17 },

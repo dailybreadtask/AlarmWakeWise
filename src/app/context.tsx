@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   suggestionSub: { color: colors.muted, fontSize: 13 },
   found: { color: colors.muted, fontSize: 13, marginTop: space.xs },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  step: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  step: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.hairline, alignItems: 'center', justifyContent: 'center' },
   stepText: { color: colors.ink, fontSize: 20 },
   stepValue: { color: colors.ink, fontSize: 17, fontWeight: '300', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
   wakeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, paddingTop: space.lg },
