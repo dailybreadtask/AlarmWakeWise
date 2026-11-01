@@ -1,20 +1,22 @@
-import { Stack } from 'expo-router';
+import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useMemo, useState } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
-import { Card, Heading, Page, SectionLabel } from '../components/Layout';
+import { CollapsibleLine, Line } from '../components/CollapsibleLine';
+import { Intro, Lines, Page, SectionLabel } from '../components/Layout';
 import { SoundChoice } from '../components/SoundChoice';
 import { loadPreferences, savePreference } from '../context/contextRepository';
 import { soundById, type WakeSound } from '../sound/wakeSounds';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space, type } from '../theme/tokens';
+import { colors } from '../theme/tokens';
 
-/** Settings: the alarm tone you want by default. Tap a tone to hear it; the choice is saved. */
+/** Settings: the alarm tone you want by default, and the privacy choices. Tap a tone to hear it; the choice is saved. */
 export default function SettingsScreen() {
   const db = useSQLiteContext();
   const sql = useMemo(() => sqlFrom(db), [db]);
   const [soundId, setSoundId] = useState<string | null>(null);
+  const [soundOpen, setSoundOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,13 +36,30 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Page>
-      <Stack.Screen options={{ title: 'Settings' }} />
-      <Heading title="Alarm sound" body="Choose the tone your alarms use. Tap a tone to hear it." />
-      <SectionLabel>Tones</SectionLabel>
-      <Card>{soundId ? <SoundChoice selectedId={soundId} onSelect={(s) => void choose(s)} /> : null}</Card>
-      <Text style={[type.caption, { color: colors.muted, paddingHorizontal: space.xs }]}>Current: {soundById(soundId ?? '').name}. Volume and vibration are set by iOS, not by the app.</Text>
-      {message ? <Text style={[type.body, { color: colors.ink }]} accessibilityRole="alert">{message}</Text> : null}
+    <Page title="Settings">
+      <Intro>Defaults for new alarms. Volume and vibration are set by iOS, not by the app.</Intro>
+
+      <SectionLabel>Alarms</SectionLabel>
+      <Lines>
+        <CollapsibleLine title="Alarm sound" value={soundId ? soundById(soundId).name : ''} open={soundOpen} onToggle={() => setSoundOpen((open) => !open)}>
+          {soundId ? <SoundChoice selectedId={soundId} onSelect={(s) => void choose(s)} /> : null}
+        </CollapsibleLine>
+      </Lines>
+      {message ? (
+        <Text style={styles.message} accessibilityRole="alert">
+          {message}
+        </Text>
+      ) : null}
+
+      <SectionLabel>Privacy</SectionLabel>
+      <Lines>
+        <Line title="Speech and privacy" value="What is shared, and when" onPress={() => router.push('/consent')} />
+        {__DEV__ ? <Line title="Alarm test" value="Development only" onPress={() => router.push('/alarm-test')} /> : null}
+      </Lines>
     </Page>
   );
 }
+
+const styles = StyleSheet.create({
+  message: { color: colors.ink, fontSize: 14, lineHeight: 19 },
+});

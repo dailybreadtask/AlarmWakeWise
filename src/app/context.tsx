@@ -1,10 +1,10 @@
-import { Stack } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Heading, Page, SectionLabel } from '../components/Layout';
-import { PressScale } from '../components/PressScale';
+import { CollapsibleLine } from '../components/CollapsibleLine';
+import { ControlLine, Field, Intro, Lines, Options, Page, PrimaryButton, SectionLabel, TextLink } from '../components/Layout';
 import {
   addPlace,
   deleteContext,
@@ -18,23 +18,29 @@ import {
   type PlaceKind,
   type SavedPlace,
 } from '../context/contextRepository';
+import { placeSearch, type PlaceSuggestion } from '../places/placeSearch';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 
 const KIND_LABEL: Record<PlaceKind, string> = { home: 'Home', work: 'Work', station: 'Station', other: 'Other' };
 
-/** Your saved places and planning preferences. You can see, change and delete all of it. */
+/** Your saved places and planning times. You can see, change and delete all of it. */
 export default function ContextScreen() {
   const db = useSQLiteContext();
   const sql = useMemo(() => sqlFrom(db), [db]);
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [prefs, setPrefs] = useState<Preferences | null>(null);
+  const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState('');
   const [area, setArea] = useState('');
   const [kind, setKind] = useState<PlaceKind>('work');
   const [crs, setCrs] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [wakeText, setWakeText] = useState('');
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  // Where the chosen suggestion is. Kept on this phone with the place. It is only used for the weather, if you allow that.
+  const [found, setFound] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const reload = useCallback(async () => {
     const [list, p] = await Promise.all([listPlaces(sql), loadPreferences(sql)]);
@@ -56,16 +62,38 @@ export default function ContextScreen() {
     };
   }, [sql]);
 
+  // Suggestions from Apple Maps, a moment after typing stops.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void placeSearch.suggest(query).then(setSuggestions);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  async function pick(suggestion: PlaceSuggestion) {
+    const resolved = await placeSearch.resolve(suggestion.id);
+    if (!resolved) return;
+    // The name is the person's own word for the place, so an existing one is kept.
+    setLabel((current) => (current.trim() === '' ? resolved.name.slice(0, 30) : current));
+    setArea(resolved.area);
+    setFound({ latitude: resolved.latitude, longitude: resolved.longitude });
+    setQuery('');
+    setSuggestions([]);
+  }
+
   async function save() {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const input = { id, label, area: area || null, kind, crs: kind === 'station' ? crs : null, createdAt: new Date().toISOString() };
+    const input = { id, label, area: area || null, kind, crs: kind === 'station' ? crs : null, latitude: found?.latitude ?? null, longitude: found?.longitude ?? null, createdAt: new Date().toISOString() };
     const problem = placeProblem(input);
     if (problem) return setFormError(problem);
     await addPlace(sql, input);
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setLabel('');
     setArea('');
     setCrs('');
+    setFound(null);
     setFormError(null);
+    setAdding(false);
     await reload();
   }
 
@@ -77,6 +105,7 @@ export default function ContextScreen() {
   async function change(key: 'getReadyMinutes' | 'bufferMinutes', delta: number) {
     if (!prefs) return;
     const next = Math.min(240, Math.max(0, prefs[key] + delta));
+    void Haptics.selectionAsync();
     await savePreference(sql, key, next, new Date().toISOString());
     await reload();
   }
@@ -102,106 +131,89 @@ export default function ContextScreen() {
   }
 
   return (
-    <Page>
-      <Stack.Screen options={{ title: 'Your context' }} />
-      <Heading title="Your context" />
-      <Text style={styles.body}>
-        WakeWise keeps your places and planning times on this phone. Only a place’s name and area are sent with a request, never its address or coordinates. You can change or delete any of it here.
-      </Text>
+    <Page title="Insights">
+      <Intro>
+        WakeWise keeps your places and planning times on this phone. Only a place’s name and area are sent with a request, never its address or coordinates. Addresses you search for are looked up by Apple Maps. The location it finds stays on this phone, except that your home’s location is used to look up the weather if you allow that in Speech and privacy.
+      </Intro>
 
       <SectionLabel>Places</SectionLabel>
-      {places.length === 0 ? <Text style={styles.body}>No places saved yet.</Text> : null}
-      {places.map((p) => (
-        <View key={p.id} style={styles.row}>
-          <View style={styles.flex}>
-            <Text style={styles.label}>{p.label}</Text>
-            <Text style={styles.caption}>
-              {KIND_LABEL[p.kind]}
-              {p.crs ? ` · ${p.crs}` : ''}
-              {p.area ? ` · ${p.area}` : ''}
-            </Text>
-          </View>
-          <PressScale onPress={() => void remove(p)} accessibilityRole="button" accessibilityLabel={`Delete ${p.label}`} style={styles.small}>
-            <Text style={styles.smallText}>Delete</Text>
-          </PressScale>
-        </View>
-      ))}
-
-      <SectionLabel>Add a place</SectionLabel>
-      <TextInput style={styles.input} value={label} onChangeText={setLabel} placeholder="Name, for example Work" placeholderTextColor={colors.muted} accessibilityLabel="Place name" />
-      <View style={styles.chips}>
-        {PLACE_KINDS.map((k) => (
-          <PressScale key={k} onPress={() => setKind(k)} accessibilityRole="radio" accessibilityState={{ selected: kind === k }} style={[styles.chip, kind === k && styles.chipOn]}>
-            <Text style={[styles.chipText, kind === k && styles.chipTextOn]}>{KIND_LABEL[k]}</Text>
-          </PressScale>
+      <Lines>
+        {places.length === 0 ? <Text style={styles.empty}>No places saved yet.</Text> : null}
+        {places.map((p) => (
+          <ControlLine
+            key={p.id}
+            title={p.label}
+            detail={`${KIND_LABEL[p.kind]}${p.crs ? ` · ${p.crs}` : ''}${p.area ? ` · ${p.area}` : ''}`}
+            right={<TextLink label="Delete" onPress={() => void remove(p)} />}
+          />
         ))}
-      </View>
-      {kind === 'station' ? (
-        <TextInput style={styles.input} value={crs} onChangeText={(v) => setCrs(v.toUpperCase().slice(0, 3))} placeholder="Station code, for example BHG" placeholderTextColor={colors.muted} accessibilityLabel="Station code" autoCapitalize="characters" />
-      ) : null}
-      <TextInput style={styles.input} value={area} onChangeText={setArea} placeholder="Area (optional), for example Edinburgh" placeholderTextColor={colors.muted} accessibilityLabel="Area" />
-      {formError ? <Text style={styles.error} accessibilityRole="alert">{formError}</Text> : null}
-      <PressScale onPress={() => void save()} style={styles.primary} accessibilityRole="button">
-        <Text style={styles.primaryText}>Save place</Text>
-      </PressScale>
+        <CollapsibleLine title="Add a place" open={adding} onToggle={() => setAdding((open) => !open)}>
+          <View style={styles.form}>
+            {placeSearch.isSupported() ? (
+              <View>
+                <Field label="Search for an address or place" value={query} onChangeText={setQuery} autoCorrect={false} placeholder="For example Glasgow Queen Street" />
+                {suggestions.map((s) => (
+                  <Pressable key={s.id} onPress={() => void pick(s)} accessibilityRole="button" accessibilityLabel={`${s.title}, ${s.subtitle}`} style={styles.suggestion}>
+                    <Text style={styles.suggestionTitle}>{s.title}</Text>
+                    {s.subtitle ? <Text style={styles.suggestionSub}>{s.subtitle}</Text> : null}
+                  </Pressable>
+                ))}
+                {found ? <Text style={styles.found}>Location found. It is only used for the weather, if you allow it.</Text> : null}
+              </View>
+            ) : null}
+            <Field label="Name" value={label} onChangeText={setLabel} placeholder="For example Work" maxLength={30} />
+            <Options label="Kind of place" options={PLACE_KINDS.map((k) => ({ value: k, label: KIND_LABEL[k] }))} value={kind} onChange={setKind} />
+            {kind === 'station' ? <Field label="Station code" value={crs} onChangeText={(v) => setCrs(v.toUpperCase().slice(0, 3))} placeholder="For example BHG" autoCapitalize="characters" /> : null}
+            <Field label="Area (optional)" value={area} onChangeText={setArea} placeholder="For example Edinburgh" error={formError} />
+            <PrimaryButton label="Save place" onPress={() => void save()} />
+          </View>
+        </CollapsibleLine>
+      </Lines>
 
       <SectionLabel>Planning</SectionLabel>
       {prefs ? (
-        <>
-          <Stepper label="Time to get ready" value={`${prefs.getReadyMinutes} min`} onMinus={() => void change('getReadyMinutes', -5)} onPlus={() => void change('getReadyMinutes', 5)} />
-          <Stepper label="Spare time before" value={`${prefs.bufferMinutes} min`} onMinus={() => void change('bufferMinutes', -5)} onPlus={() => void change('bufferMinutes', 5)} />
-          <Text style={styles.label}>Never wake me before</Text>
-          <View style={styles.row}>
-            <TextInput style={[styles.input, styles.flex]} value={wakeText} onChangeText={setWakeText} placeholder="06:15, or leave blank" placeholderTextColor={colors.muted} accessibilityLabel="Earliest wake time" keyboardType="numbers-and-punctuation" />
-            <PressScale onPress={() => void saveWake()} style={styles.small} accessibilityRole="button">
-              <Text style={styles.smallText}>Save</Text>
-            </PressScale>
+        <Lines>
+          <ControlLine title="Time to get ready" right={<Stepper value={`${prefs.getReadyMinutes} min`} label="time to get ready" onMinus={() => void change('getReadyMinutes', -5)} onPlus={() => void change('getReadyMinutes', 5)} />} />
+          <ControlLine title="Spare time before" right={<Stepper value={`${prefs.bufferMinutes} min`} label="spare time" onMinus={() => void change('bufferMinutes', -5)} onPlus={() => void change('bufferMinutes', 5)} />} />
+          <View style={styles.wakeRow}>
+            <View style={styles.wakeField}>
+              <Field label="Never wake me before" value={wakeText} onChangeText={setWakeText} placeholder="06:15, or leave blank" keyboardType="numbers-and-punctuation" />
+            </View>
+            <TextLink label="Save" onPress={() => void saveWake()} />
           </View>
-        </>
+        </Lines>
       ) : null}
 
-      <PressScale onPress={eraseAll} style={styles.danger} accessibilityRole="button" accessibilityLabel="Delete all saved places and preferences">
-        <Text style={styles.dangerText}>Delete all my saved places and preferences</Text>
-      </PressScale>
+      <TextLink label="Delete all my saved places and preferences" onPress={eraseAll} danger />
     </Page>
   );
 }
 
-function Stepper({ label, value, onMinus, onPlus }: { label: string; value: string; onMinus: () => void; onPlus: () => void }) {
+function Stepper({ value, label, onMinus, onPlus }: { value: string; label: string; onMinus: () => void; onPlus: () => void }) {
   return (
-    <View style={styles.row}>
-      <Text style={[styles.label, styles.flex]}>{label}</Text>
-      <PressScale onPress={onMinus} style={styles.small} accessibilityRole="button" accessibilityLabel={`Less ${label.toLowerCase()}`}>
-        <Text style={styles.smallText}>−</Text>
-      </PressScale>
-      <Text style={styles.value}>{value}</Text>
-      <PressScale onPress={onPlus} style={styles.small} accessibilityRole="button" accessibilityLabel={`More ${label.toLowerCase()}`}>
-        <Text style={styles.smallText}>+</Text>
-      </PressScale>
+    <View style={styles.stepper}>
+      <Pressable onPress={onMinus} accessibilityRole="button" accessibilityLabel={`Less ${label}`} style={styles.step}>
+        <Text style={styles.stepText}>−</Text>
+      </Pressable>
+      <Text style={styles.stepValue}>{value}</Text>
+      <Pressable onPress={onPlus} accessibilityRole="button" accessibilityLabel={`More ${label}`} style={styles.step}>
+        <Text style={styles.stepText}>+</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: space.lg, gap: space.md, backgroundColor: colors.paper, flexGrow: 1 },
-  heading: { color: colors.ink, ...type.title, marginTop: space.lg },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  label: { color: colors.ink, ...type.label },
-  caption: { color: colors.muted, ...type.caption },
-  error: { color: colors.danger, ...type.caption },
-  value: { color: colors.ink, ...type.label, minWidth: 64, textAlign: 'center' },
-  flex: { flex: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },
-  input: { backgroundColor: colors.card, borderRadius: radius.button, borderWidth: 1, borderColor: colors.line, padding: space.md, color: colors.ink, ...type.body },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: colors.card },
-  chipOn: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: colors.ink, ...type.label },
-  chipTextOn: { color: colors.onPrimary },
-  small: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.xs, paddingHorizontal: space.md, backgroundColor: colors.card },
-  smallText: { color: colors.ink, ...type.label },
-  primary: { backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center' },
-  primaryText: { color: colors.onPrimary, ...type.label },
-  danger: { borderWidth: 1, borderColor: colors.danger, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center', marginTop: space.xl },
-  dangerText: { color: colors.danger, ...type.label },
+  empty: { color: colors.muted, fontSize: 15, paddingVertical: space.md },
+  form: { gap: space.lg, paddingTop: space.sm },
+  suggestion: { paddingVertical: space.md, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line, gap: 2 },
+  suggestionTitle: { color: colors.ink, fontSize: 16 },
+  suggestionSub: { color: colors.muted, fontSize: 13 },
+  found: { color: colors.muted, fontSize: 13, marginTop: space.xs },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  step: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  stepText: { color: colors.ink, fontSize: 20 },
+  stepValue: { color: colors.ink, fontSize: 17, fontWeight: '300', minWidth: 64, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  wakeRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, paddingTop: space.lg },
+  wakeField: { flex: 1 },
 });

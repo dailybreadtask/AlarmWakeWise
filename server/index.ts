@@ -10,6 +10,7 @@ import { estimateJourney, JOURNEY_MODES, type JourneyMode } from './journeyEstim
 import { drivingSeconds, geocode } from './tomtom';
 import { parseCrsTable, type CrsTable } from './stationLookup';
 import { MAX_AUDIO_BYTES, transcribeAudio, type TranscribeError } from './transcribe';
+import { WEATHER_ATTRIBUTION, fetchWeatherBody, signDeveloperToken, summariseWeather, type WeatherKitConfig, type WeatherSummary } from './weather';
 
 const token = process.env.WAKEWISE_API_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
@@ -40,6 +41,56 @@ if (nr.host && nr.username && nr.password) {
       .finally(() => setTimeout(keepListening, 10_000));
   };
   keepListening();
+}
+
+// Weather: Apple WeatherKit. Off (503) unless all four settings are present and the key file can be read.
+function loadWeatherConfig(): WeatherKitConfig | null {
+  const teamId = process.env.WEATHERKIT_TEAM_ID ?? '';
+  const serviceId = process.env.WEATHERKIT_SERVICE_ID ?? '';
+  const keyId = process.env.WEATHERKIT_KEY_ID ?? '';
+  const keyPath = process.env.WEATHERKIT_PRIVATE_KEY_PATH ?? '';
+  if (!teamId || !serviceId || !keyId || !keyPath) return null;
+  const resolved = existsSync(keyPath) ? keyPath : join(process.cwd(), keyPath);
+  if (!existsSync(resolved)) return null;
+  return { teamId, serviceId, keyId, privateKeyPem: readFileSync(resolved, 'utf8') };
+}
+const weatherConfig = loadWeatherConfig();
+let weatherToken: { value: string; expiresAt: number } | null = null;
+const weatherCache = new Map<string, { at: number; summary: WeatherSummary }>();
+const WEATHER_CACHE_MS = 30 * 60_000;
+
+/** Today's weather for a point. Places a few hundred metres apart share one cached answer for half an hour. */
+async function weatherRoute(url: URL, send: (status: number, body: unknown) => void) {
+  if (!weatherConfig) return send(503, { error: 'no_weather_provider' });
+  const timezone = url.searchParams.get('timezone') ?? 'Europe/London';
+  if (!/^[A-Za-z_/+-]{1,40}$/.test(timezone)) return send(400, { error: 'bad_request' });
+  let lat = Number(url.searchParams.get('lat'));
+  let lon = Number(url.searchParams.get('lon'));
+  const place = url.searchParams.get('place')?.trim().slice(0, 80) ?? '';
+  if (!url.searchParams.has('lat') && place) {
+    // A place with no coordinates on the phone is found by name, as journeys are.
+    if (!tomtomKey) return send(503, { error: 'no_weather_provider' });
+    const point = await geocode(place, tomtomKey);
+    if (!point) return send(404, { error: 'unknown_place' });
+    lat = point.lat;
+    lon = point.lon;
+  }
+  if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return send(400, { error: 'bad_request' });
+
+  const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
+  const cached = weatherCache.get(key);
+  if (cached && Date.now() - cached.at < WEATHER_CACHE_MS) return send(200, { weather: cached.summary, attribution: WEATHER_ATTRIBUTION, cached: true });
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (!weatherToken || weatherToken.expiresAt - nowSeconds < 300) weatherToken = { value: signDeveloperToken(weatherConfig, nowSeconds), expiresAt: nowSeconds + 3600 };
+  const result = await fetchWeatherBody({ lat, lon }, weatherToken.value, timezone);
+  // Log the outcome only, never the coordinates.
+  console.log(JSON.stringify({ event: 'weather', ok: result.ok, ...(result.ok ? {} : { status: result.status }) }));
+  if (!result.ok) return send(502, { error: 'unavailable' });
+  const summary = summariseWeather(result.body, new Date(), timezone);
+  if (!summary) return send(502, { error: 'unavailable' });
+  weatherCache.set(key, { at: Date.now(), summary });
+  return send(200, { weather: summary, attribution: WEATHER_ATTRIBUTION, cached: false });
 }
 
 /** Reads a JSON body up to a small limit, then asks OpenAI to read the request. */
@@ -132,6 +183,10 @@ createServer((req, res) => {
   if (req.method === 'POST' && route === '/journey/estimate') {
     if (req.headers.authorization !== `Bearer ${token}`) return send(401, { error: 'unauthorized' });
     return journeyEstimateRoute(req, send, apiKey);
+  }
+  if (req.method === 'GET' && route === '/weather/today') {
+    if (req.headers.authorization !== `Bearer ${token}`) return send(401, { error: 'unauthorized' });
+    return void weatherRoute(new URL(req.url ?? '/', 'http://localhost'), send);
   }
   if (req.method === 'GET' && route === '/rail/stations') {
     if (req.headers.authorization !== `Bearer ${token}`) return send(401, { error: 'unauthorized' });

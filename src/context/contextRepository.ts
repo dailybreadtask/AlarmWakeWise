@@ -13,7 +13,9 @@ export const CONTEXT_TABLE_SQL = `
     area TEXT,
     kind TEXT NOT NULL,
     crs TEXT,
-    created_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    lat REAL,
+    lon REAL
   );
   CREATE TABLE IF NOT EXISTS preference (
     key TEXT PRIMARY KEY NOT NULL,
@@ -32,6 +34,9 @@ export interface SavedPlace {
   kind: PlaceKind;
   /** Station code, for a station the person uses. Null for other places. */
   crs: string | null;
+  /** Where the place is, when it was found by search. Kept on the phone and never sent with a request. */
+  latitude: number | null;
+  longitude: number | null;
   createdAt: string;
 }
 
@@ -48,7 +53,7 @@ export interface Preferences {
 
 export const DEFAULT_PREFERENCES: Preferences = { getReadyMinutes: 30, bufferMinutes: 10, earliestWake: null, soundId: DEFAULT_WAKE_SOUND_ID };
 
-export type PlaceInput = { id: string; label: string; area?: string | null; kind: PlaceKind; crs?: string | null; createdAt: string };
+export type PlaceInput = { id: string; label: string; area?: string | null; kind: PlaceKind; crs?: string | null; latitude?: number | null; longitude?: number | null; createdAt: string };
 
 /** Checks a place before it is saved. Returns the problem, or null when it is fine. */
 export function placeProblem(input: Pick<PlaceInput, 'label' | 'kind' | 'crs'>): string | null {
@@ -59,24 +64,34 @@ export function placeProblem(input: Pick<PlaceInput, 'label' | 'kind' | 'crs'>):
   return null;
 }
 
+/** Adds the columns a newer version needs to a place table made by an older one. Safe to run every start. */
+export async function migrateContext(db: SqlDb): Promise<void> {
+  const columns = await db.getAllAsync<{ name: string }>('PRAGMA table_info(place)');
+  const has = (name: string) => columns.some((c) => c.name === name);
+  if (!has('lat')) await db.execAsync('ALTER TABLE place ADD COLUMN lat REAL');
+  if (!has('lon')) await db.execAsync('ALTER TABLE place ADD COLUMN lon REAL');
+}
+
 export async function addPlace(db: SqlDb, input: PlaceInput): Promise<void> {
   const problem = placeProblem(input);
   if (problem) throw new Error(problem);
-  await db.runAsync('INSERT INTO place (id, label, area, kind, crs, created_at) VALUES (?, ?, ?, ?, ?, ?)', [
+  await db.runAsync('INSERT INTO place (id, label, area, kind, crs, created_at, lat, lon) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
     input.id,
     input.label.trim(),
     input.area?.trim() || null,
     input.kind,
     input.kind === 'station' ? (input.crs ?? '').toUpperCase() : null,
     input.createdAt,
+    input.latitude ?? null,
+    input.longitude ?? null,
   ]);
 }
 
 export async function listPlaces(db: SqlDb): Promise<SavedPlace[]> {
-  const rows = await db.getAllAsync<{ id: string; label: string; area: string | null; kind: PlaceKind; crs: string | null; created_at: string }>(
-    'SELECT id, label, area, kind, crs, created_at FROM place ORDER BY label COLLATE NOCASE',
+  const rows = await db.getAllAsync<{ id: string; label: string; area: string | null; kind: PlaceKind; crs: string | null; created_at: string; lat: number | null; lon: number | null }>(
+    'SELECT id, label, area, kind, crs, created_at, lat, lon FROM place ORDER BY label COLLATE NOCASE',
   );
-  return rows.map((r) => ({ id: r.id, label: r.label, area: r.area, kind: r.kind, crs: r.crs, createdAt: r.created_at }));
+  return rows.map((r) => ({ id: r.id, label: r.label, area: r.area, kind: r.kind, crs: r.crs, latitude: r.lat, longitude: r.lon, createdAt: r.created_at }));
 }
 
 export async function deletePlace(db: SqlDb, id: string): Promise<void> {

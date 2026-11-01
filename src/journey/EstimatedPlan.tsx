@@ -10,7 +10,7 @@ import { planFromInterpretation } from '../domain/planFromInterpretation';
 import type { Interpretation } from '../domain/interpretation';
 import { savePlan, saveTimeline } from '../plans/planRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 import { fetchEstimate, type EstimateResult } from './estimateClient';
 import { minutesFromEstimate, type EstimateNeed } from './estimateMode';
 
@@ -95,9 +95,9 @@ export function EstimatedPlan({ need, interpretation, goal, deadlineAt, timezone
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
+  wrap: { gap: space.xl },
   block: { gap: space.sm, paddingVertical: space.sm },
-  title: { color: colors.ink, ...type.title },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  caption: { color: colors.muted, ...type.caption, lineHeight: 18 },
+  title: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
+  body: { color: colors.ink, fontSize: 16, lineHeight: 23 },
+  caption: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 });

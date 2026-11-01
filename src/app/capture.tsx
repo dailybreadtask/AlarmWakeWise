@@ -1,23 +1,27 @@
-import { Stack, router } from 'expo-router';
-import { useState } from 'react';
 import * as Haptics from 'expo-haptics';
+import { Stack, router } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path, Rect } from 'react-native-svg';
 
-import { Backdrop } from '../components/Backdrop';
+import { Backdrop, BACKDROP_PAPER } from '../components/Backdrop';
+import { PlanningDisc } from '../components/PlanningDisc';
 import { PressScale } from '../components/PressScale';
 import { Waveform } from '../components/Waveform';
 import { useConsent } from '../consent/ConsentProvider';
 import { speechConfig } from '../config';
-import { parseRequest, type ParseResult } from '../intent/parseClient';
 import { listPlaces } from '../context/contextRepository';
+import { dayBeingPlanned } from '../domain/planningDay';
+import { parseRequest, type ParseResult } from '../intent/parseClient';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { useSQLiteContext } from 'expo-sqlite';
 import type { TranscriptionResult } from '../speech/transcribeClient';
 import { useVoiceCapture } from '../speech/useVoiceCapture';
-import { colors, radius, space, type } from '../theme/tokens';
-import { PrimaryButton, SectionLabel } from '../components/Layout';
+import { colors, space } from '../theme/tokens';
 
-const SUGGESTIONS = ['Bake a cake by noon', 'Be at work for 9 tomorrow', 'Study for Friday’s exam'];
+const SUGGESTIONS = ['Get me to work for 9, with a run first', 'Bake a cake by noon', 'Study for Friday’s exam'];
 
 const MESSAGES: Record<string, string> = {
   consent_required: 'Speech is off. Turn it on in Speech and privacy, or type instead.',
@@ -30,15 +34,25 @@ function messageFor(result: TranscriptionResult | null): string | null {
   return result && !result.ok ? MESSAGES[result.error] : null;
 }
 
-/** Plan a purpose, following the mockup: one question, suggestions, a talk button and a typed fallback. */
+type Phase = 'speak' | 'planning' | 'ready';
+type Parsed = Extract<ParseResult, { ok: true }>;
+
+/**
+ * Plan a purpose, following the goal screens: one question in large type, what you say or type appearing under it,
+ * then a short "planning" moment while the request is read, and "See my plan" to review the result.
+ */
 export default function CaptureScreen() {
   const { hasConsent } = useConsent();
   const db = useSQLiteContext();
+  const insets = useSafeAreaInsets();
+  const voiceReady = speechConfig.baseUrl !== '';
   const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
+  const [typing, setTyping] = useState(!voiceReady);
+  const [phase, setPhase] = useState<Phase>('speak');
+  const [progress, setProgress] = useState(0);
+  const [parsed, setParsed] = useState<Parsed | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const aiAllowed = hasConsent('ai_reading');
-  const voiceReady = speechConfig.baseUrl !== '';
 
   const { state, result, start, stop } = useVoiceCapture({
     baseUrl: speechConfig.baseUrl,
@@ -49,116 +63,282 @@ export default function CaptureScreen() {
 
   const recording = state === 'recording';
   const busy = state === 'transcribing';
-  const notice = !voiceReady ? 'Voice is not set up on this build. Type your request below.' : messageFor(result);
+  const notice = !voiceReady ? 'Voice is not set up on this build. Type your request instead.' : messageFor(result);
+  const { word, date } = dayBeingPlanned(new Date());
+  const dateLine = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(date);
+
+  // While the request is read the disc fills towards, but never reaches, the end. It completes when the answer arrives.
+  useEffect(() => {
+    if (phase !== 'planning') return;
+    const id = setInterval(() => setProgress((p) => p + (90 - p) * 0.07), 100);
+    return () => clearInterval(id);
+  }, [phase]);
 
   async function send() {
     if (!aiAllowed || text.trim() === '') return;
-    setSending(true);
     setParseError(null);
+    setProgress(0);
+    setPhase('planning');
     const places = (await listPlaces(sqlFrom(db))).map((p) => ({ label: p.label, area: p.area ?? undefined }));
     const outcome: ParseResult = await parseRequest(text.trim(), { baseUrl: speechConfig.baseUrl, token: speechConfig.token, places });
-    setSending(false);
-    if (!outcome.ok) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    if (outcome.ok) router.push({ pathname: '/review', params: { data: JSON.stringify(outcome.value), text: text.trim() } });
-    else setParseError(outcome.error === 'invalid' ? 'I could not understand that answer. Please try again.' : 'Could not reach the assistant. Please try again.');
+    if (outcome.ok) {
+      setParsed(outcome);
+      setProgress(100);
+      setPhase('ready');
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setPhase('speak');
+      setParseError(outcome.error === 'invalid' ? 'I could not understand that. Please try again.' : 'Could not reach the assistant. Please try again.');
+    }
   }
 
-  const canSend = aiAllowed && text.trim() !== '' && !sending;
+  function seePlan() {
+    if (!parsed) return;
+    router.push({ pathname: '/review', params: { data: JSON.stringify(parsed.value), text: text.trim() } });
+  }
+
+  function startAgain() {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setText('');
+    setParseError(null);
+  }
+
+  const planning = phase !== 'speak';
+  const canPlan = aiAllowed && text.trim() !== '' && !recording && !busy;
 
   return (
     <View style={styles.root}>
-    <Backdrop />
-    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <Stack.Screen options={{ title: 'Plan a purpose', headerTintColor: colors.ink, headerStyle: { backgroundColor: colors.paper } }} />
+      <Backdrop />
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <Text style={styles.question}>What do you need to get done?</Text>
-
-      <View style={styles.suggestions}>
-        <SectionLabel>Or try</SectionLabel>
-        <View style={styles.chips}>
-          {SUGGESTIONS.map((s) => (
-            <Pressable key={s} style={styles.chip} onPress={() => setText(s)} accessibilityRole="button" accessibilityLabel={`Use: ${s}`}>
-              <Text style={styles.chipText}>{s}</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
+        {planning ? (
+          <View style={styles.headerText}>
+            <Text style={styles.planTitle}>{phase === 'ready' ? 'Your plan is ready' : 'Planning your day'}</Text>
+            <Text style={styles.sub}>{phase === 'ready' ? 'Here is what I worked out' : 'Reading what you asked for'}</Text>
+          </View>
+        ) : (
+          <>
+            <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back" hitSlop={10} style={styles.back}>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+                <Path d="M15 6l-6 6 6 6" />
+              </Svg>
+              <Text style={styles.headerTitle}>{word}</Text>
             </Pressable>
-          ))}
-        </View>
+            <Text style={styles.sub}>{dateLine}</Text>
+          </>
+        )}
       </View>
 
-      <TextInput
-        style={styles.input}
-        multiline
-        value={text}
-        onChangeText={setText}
-        placeholder="Type instead"
-        placeholderTextColor={colors.muted}
-        accessibilityLabel="Your request"
-      />
-
-      {voiceReady ? (
-        <View style={styles.micWrap}>
-          <PressScale
-            style={[styles.mic, recording && styles.micActive, busy && styles.disabled]}
-            onPress={() => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              if (recording) void stop();
-              else void start();
-            }}
-            disabled={busy}
-            accessibilityRole="button"
-            accessibilityLabel={recording ? 'Stop recording' : 'Start recording'}
-            accessibilityState={{ busy }}
-          >
-            <Text style={styles.micText}>{busy ? '…' : recording ? 'Stop' : 'Talk'}</Text>
-          </PressScale>
-          <Waveform active={recording} />
-          <Text style={styles.caption}>{busy ? 'Turning speech into text' : recording ? 'Listening. Tap again to stop' : 'Tap to talk, or type'}</Text>
+      {planning ? (
+        <View style={styles.planning}>
+          <PlanningDisc progress={progress} />
+          <View style={styles.pips} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress) }}>
+            {Array.from({ length: 20 }, (_, i) => (
+              <View key={i} style={[styles.pip, i < Math.round(progress / 5) && styles.pipOn]} />
+            ))}
+          </View>
+          <View style={styles.checks}>
+            <Check title="Heard you" note={text.length > 60 ? `${text.slice(0, 57)}…` : text} done />
+            <Check title="Reading your request" note="Working out what you need to get done" done={phase === 'ready'} />
+          </View>
+          <View style={styles.planningFooter}>
+            {phase === 'ready' ? (
+              <PressScale style={styles.seePlan} onPress={seePlan} accessibilityRole="button" accessibilityLabel="See my plan">
+                <Text style={styles.seePlanText}>See my plan</Text>
+              </PressScale>
+            ) : null}
+            <Pressable onPress={() => setPhase('speak')} accessibilityRole="button" accessibilityLabel="Change my request" style={styles.textButton}>
+              <Text style={styles.textButtonText}>Change my request</Text>
+            </Pressable>
+          </View>
         </View>
-      ) : null}
+      ) : (
+        <>
+          <ScrollView style={styles.middle} contentContainerStyle={styles.middleContent} keyboardShouldPersistTaps="handled">
+            <Text style={styles.question}>What’s {word.toLowerCase()} for?</Text>
+            {typing ? (
+              <TextInput
+                style={styles.typed}
+                multiline
+                autoFocus
+                value={text}
+                onChangeText={setText}
+                placeholder="Type it here"
+                placeholderTextColor="#9A9A94"
+                accessibilityLabel="Your request"
+              />
+            ) : text ? (
+              <Words text={text} />
+            ) : (
+              <View style={styles.suggestions}>
+                <Text style={styles.hint}>{recording ? 'Listening…' : busy ? 'Turning speech into text…' : 'Tap the microphone and say it, or try one of these.'}</Text>
+                {SUGGESTIONS.map((s) => (
+                  <Pressable key={s} onPress={() => setText(s)} accessibilityRole="button" accessibilityLabel={`Use: ${s}`} style={styles.suggestion}>
+                    <Text style={styles.suggestionText}>{s}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </ScrollView>
 
-      {notice ? (
-        <Text style={styles.notice} accessibilityRole="alert">
-          {notice}
-        </Text>
-      ) : null}
-      {parseError ? (
-        <Text style={styles.notice} accessibilityRole="alert">
-          {parseError}
-        </Text>
-      ) : null}
-      {!aiAllowed ? (
-        <Pressable onPress={() => router.push('/consent')} accessibilityRole="link">
-          <Text style={styles.link}>Allow WakeWise to read requests, so Send works</Text>
-        </Pressable>
-      ) : null}
-      {!hasConsent('speech') && voiceReady ? (
-        <Pressable onPress={() => router.push('/consent')} accessibilityRole="link">
-          <Text style={styles.link}>Turn on speech to text</Text>
-        </Pressable>
-      ) : null}
+          {voiceReady ? <Waveform active={recording} /> : null}
 
-      <PrimaryButton label={sending ? 'Reading your request…' : 'Send'} onPress={() => void send()} disabled={!canSend} />
-    </ScrollView>
+          <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+            {notice ? (
+              <Text style={styles.notice} accessibilityRole="alert">
+                {notice}
+              </Text>
+            ) : null}
+            {parseError ? (
+              <Text style={styles.notice} accessibilityRole="alert">
+                {parseError}
+              </Text>
+            ) : null}
+            {!aiAllowed ? (
+              <Pressable onPress={() => router.push('/consent')} accessibilityRole="link">
+                <Text style={styles.link}>Allow WakeWise to read requests, so planning works</Text>
+              </Pressable>
+            ) : null}
+            {voiceReady && !hasConsent('speech') ? (
+              <Pressable onPress={() => router.push('/consent')} accessibilityRole="link">
+                <Text style={styles.link}>Turn on speech to text</Text>
+              </Pressable>
+            ) : null}
+
+            {text.trim() !== '' && !recording && !busy ? (
+              <PressScale style={[styles.plan, !canPlan && styles.disabled]} onPress={() => void send()} disabled={!canPlan} accessibilityRole="button" accessibilityLabel="Plan it">
+                <Text style={styles.planText}>Plan it</Text>
+              </PressScale>
+            ) : null}
+
+            <View style={styles.controls}>
+              <Pressable onPress={startAgain} disabled={recording || busy || text === ''} accessibilityRole="button" accessibilityLabel="Start again" style={[styles.restart, (recording || busy || text === '') && styles.disabled]}>
+                <View style={styles.restartMark} />
+              </Pressable>
+
+              <PressScale
+                style={[styles.mic, (!voiceReady || busy) && styles.disabled]}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setTyping(false);
+                  if (recording) void stop();
+                  else void start();
+                }}
+                disabled={!voiceReady || busy}
+                accessibilityRole="button"
+                accessibilityLabel={recording ? 'Stop recording' : 'Start recording'}
+                accessibilityState={{ busy }}
+              >
+                {busy ? (
+                  <Text style={styles.micBusy}>…</Text>
+                ) : recording ? (
+                  <Svg width={20} height={20} viewBox="0 0 24 24" fill={colors.ink}>
+                    <Rect x={6} y={6} width={12} height={12} rx={2} />
+                  </Svg>
+                ) : (
+                  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={2} strokeLinecap="round">
+                    <Rect x={9} y={3} width={6} height={12} rx={3} />
+                    <Path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                  </Svg>
+                )}
+              </PressScale>
+
+              <Pressable onPress={() => setTyping((t) => !t)} accessibilityRole="button" accessibilityLabel={typing ? 'Hide the keyboard' : 'Type instead'} accessibilityState={{ selected: typing }} style={[styles.keys, typing && styles.keysOn]}>
+                <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={1.6} strokeLinecap="round">
+                  <Rect x={3} y={6} width={18} height={12} rx={2} />
+                  <Path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8" />
+                </Svg>
+              </Pressable>
+            </View>
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+/** What you said, in large type. Words fade in as they arrive. */
+function Words({ text }: { text: string }) {
+  const reduced = useReducedMotion();
+  const words = text.trim().split(/\s+/);
+  return (
+    <View style={styles.words} accessibilityLabel={text}>
+      {words.map((w, i) => (
+        <Animated.Text key={`${i}-${w}`} entering={FadeIn.duration(reduced ? 150 : 350).delay(reduced ? 0 : Math.min(i, 20) * 40)} style={styles.word}>
+          {w}{' '}
+        </Animated.Text>
+      ))}
+    </View>
+  );
+}
+
+function Check({ title, note, done }: { title: string; note: string; done?: boolean }) {
+  return (
+    <View style={styles.check}>
+      <View style={[styles.mark, done && styles.markDone]}>
+        {done ? (
+          <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M5 12.5l4.5 4.5L19 7.5" />
+          </Svg>
+        ) : null}
+      </View>
+      <View style={styles.checkText}>
+        <Text style={styles.checkTitle}>{title}</Text>
+        <Text style={styles.checkNote} numberOfLines={2}>
+          {note}
+        </Text>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.paper },
-  container: { padding: space.lg, gap: space.lg, flexGrow: 1 },
-  question: { color: colors.ink, ...type.title, fontWeight: '400', marginTop: space.md },
-  caption: { color: colors.muted, ...type.caption },
-  suggestions: { gap: space.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: colors.card },
-  chipText: { color: colors.ink, ...type.label },
-  input: { minHeight: 96, backgroundColor: colors.card, borderRadius: radius.button, padding: space.md, color: colors.ink, ...type.body, textAlignVertical: 'top' },
-  micWrap: { alignItems: 'center', gap: space.sm, marginTop: space.md },
-  mic: { width: 96, height: 96, borderRadius: 48, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  micActive: { backgroundColor: colors.dark },
-  micText: { color: colors.onPrimary, ...type.label },
-  notice: { color: colors.ink, ...type.caption, lineHeight: 19 },
-  link: { color: colors.ink, textDecorationLine: 'underline', ...type.label },
-  send: { backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center', marginTop: 'auto' },
-  sendText: { color: colors.onPrimary, ...type.label },
-  disabled: { opacity: 0.5 },
+  root: { flex: 1, backgroundColor: BACKDROP_PAPER },
+  header: { paddingHorizontal: space.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  headerText: { gap: 2 },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, marginLeft: -6 },
+  headerTitle: { color: colors.ink, fontSize: 17, fontWeight: '600' },
+  sub: { color: '#5E5E59', fontSize: 15 },
+  planTitle: { color: colors.ink, fontSize: 30, fontWeight: '600', letterSpacing: -0.8 },
+  middle: { flex: 1 },
+  middleContent: { flexGrow: 1, paddingHorizontal: space.xl, justifyContent: 'center', gap: 18 },
+  question: { color: '#5E5E59', fontSize: 17 },
+  words: { flexDirection: 'row', flexWrap: 'wrap' },
+  word: { color: colors.ink, fontSize: 36, fontWeight: '500', letterSpacing: -1, lineHeight: 40 },
+  typed: { color: colors.ink, fontSize: 36, fontWeight: '500', letterSpacing: -1, lineHeight: 40, minHeight: 120, padding: 0, textAlignVertical: 'top' },
+  suggestions: { gap: 4 },
+  hint: { color: '#5E5E59', fontSize: 15, marginBottom: space.sm },
+  suggestion: { minHeight: 48, justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: '#CFCFC9' },
+  suggestionText: { color: colors.ink, fontSize: 17 },
+  footer: { paddingHorizontal: space.xl, paddingTop: 22, gap: 14 },
+  notice: { color: colors.ink, fontSize: 14, lineHeight: 19 },
+  link: { color: colors.ink, textDecorationLine: 'underline', fontSize: 15 },
+  plan: { minHeight: 58, borderRadius: 29, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  planText: { color: colors.paper, fontSize: 18, fontWeight: '600' },
+  controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  restart: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#FBE3DF', alignItems: 'center', justifyContent: 'center' },
+  restartMark: { width: 16, height: 16, borderRadius: 3, backgroundColor: '#D9381E' },
+  mic: { width: 120, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  micBusy: { color: colors.ink, fontSize: 22 },
+  keys: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: '#CFCFC9', backgroundColor: colors.paper, alignItems: 'center', justifyContent: 'center' },
+  keysOn: { borderColor: colors.ink },
+  disabled: { opacity: 0.4 },
+  planning: { flex: 1, paddingTop: 26 },
+  pips: { flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 24, marginHorizontal: space.xl },
+  pip: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#C9C9C3' },
+  pipOn: { backgroundColor: colors.ink },
+  checks: { marginTop: 24, marginHorizontal: space.xl, gap: 2 },
+  check: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
+  mark: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderStyle: 'dashed', borderColor: '#8A8A84', alignItems: 'center', justifyContent: 'center' },
+  markDone: { backgroundColor: colors.primary, borderStyle: 'solid', borderColor: colors.ink },
+  checkText: { flex: 1 },
+  checkTitle: { color: colors.ink, fontSize: 16, fontWeight: '500' },
+  checkNote: { color: '#5E5E59', fontSize: 14 },
+  planningFooter: { marginTop: 'auto', paddingHorizontal: space.xl, paddingBottom: 40, gap: 10 },
+  seePlan: { minHeight: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  seePlanText: { color: colors.ink, fontSize: 18, fontWeight: '600' },
+  textButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  textButtonText: { color: '#5E5E59', fontSize: 15 },
 });

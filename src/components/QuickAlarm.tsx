@@ -1,7 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 import { useSQLiteContext } from 'expo-sqlite';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { loadPreferences } from '../context/contextRepository';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -9,9 +9,10 @@ import { alarmBridge } from '../alarm/nativeBridge';
 import { saveAlarm } from '../storage/alarmRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
 import { DEFAULT_WAKE_SOUND_ID, soundById } from '../sound/wakeSounds';
+import { CollapsibleLine } from './CollapsibleLine';
 import { SoundChoice } from './SoundChoice';
 import { ensureAuthorized, scheduleAlarm } from '../alarm/alarmScheduler';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
 type Status = 'ready' | 'setting' | 'set' | 'set_default' | 'denied' | 'unsupported' | 'failed';
@@ -40,15 +41,20 @@ interface Props {
   note?: string;
   /** Called once the alarm is set, e.g. to save the plan it belongs to. */
   onSet?: (nativeId: string) => void;
+  /** Shows only the approval button and its messages, for a screen's bottom bar. */
+  footer?: boolean;
+  /** A quieter action shown beside the approval button in footer mode, e.g. Change. */
+  secondary?: ReactNode;
 }
 
 /** One alarm and one confirmation. Nothing is scheduled until the person approves. */
-export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet }: Props) {
+export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet, footer, secondary }: Props) {
   // Created once, so a second tap cannot make a second alarm.
   const [nativeId] = useState(() => randomUUID());
   const [status, setStatus] = useState<Status>('ready');
   const db = useSQLiteContext();
   const [soundId, setSoundId] = useState(DEFAULT_WAKE_SOUND_ID);
+  const [soundOpen, setSoundOpen] = useState(false);
   useEffect(() => {
     let active = true;
     void loadPreferences(sqlFrom(db)).then((p) => {
@@ -81,21 +87,48 @@ export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet }: Pro
   }
 
   const done = status === 'set' || status === 'set_default';
+  if (footer) {
+    return (
+      <View style={styles.footer}>
+        {MESSAGES[status] ? <Text style={styles.message} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
+        {note ? <Text style={styles.message}>{note}</Text> : null}
+        <View style={styles.footerRow}>
+          {secondary}
+          <PressScale
+            style={[styles.setButton, (done || status === 'setting') && styles.disabled]}
+            onPress={approve}
+            disabled={done || status === 'setting'}
+            accessibilityRole="button"
+            accessibilityLabel={`Set alarm for ${clock(at, timezone)}`}
+          >
+            <Text style={styles.setText}>{done ? 'Alarm set' : `Set for ${clock(at, timezone)}`}</Text>
+          </PressScale>
+        </View>
+      </View>
+    );
+  }
+  const soundName = soundById(soundId).name;
   return (
     <View style={styles.wrap}>
-      <Text style={styles.caption}>{caption}</Text>
-      <Text style={styles.display} accessibilityLabel={`Alarm at ${clock(at, timezone)}`}>
-        {clock(at, timezone)}
-      </Text>
-      {done ? null : <SoundChoice selectedId={soundId} onSelect={(sound) => setSoundId(sound.id)} />}
+      <View>
+        <Text style={styles.caption}>{caption}</Text>
+        <Text style={styles.display} accessibilityLabel={`Alarm at ${clock(at, timezone)}`}>
+          {clock(at, timezone)}
+        </Text>
+      </View>
+      {done ? null : (
+        <CollapsibleLine title="Sound" value={soundName} open={soundOpen} onToggle={() => setSoundOpen((open) => !open)}>
+          <SoundChoice selectedId={soundId} onSelect={(sound) => setSoundId(sound.id)} />
+        </CollapsibleLine>
+      )}
       <PressScale
-        style={[styles.primary, (done || status === 'setting') && styles.disabled]}
+        style={[styles.setButton, (done || status === 'setting') && styles.disabled]}
         onPress={approve}
         disabled={done || status === 'setting'}
         accessibilityRole="button"
         accessibilityLabel={`Set alarm for ${clock(at, timezone)}`}
       >
-        <Text style={styles.primaryText}>{done ? 'Alarm set' : `Set alarm for ${clock(at, timezone)}`}</Text>
+        <Text style={styles.setText}>{done ? 'Alarm set' : `Set alarm for ${clock(at, timezone)}`}</Text>
       </PressScale>
       {MESSAGES[status] ? <Text style={styles.message} accessibilityRole="alert">{MESSAGES[status]}</Text> : null}
       {note ? <Text style={styles.message}>{note}</Text> : null}
@@ -104,11 +137,13 @@ export function QuickAlarm({ at, timezone, caption = 'Alarm', note, onSet }: Pro
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
-  caption: { color: colors.muted, ...type.caption },
-  display: { color: colors.ink, ...type.display },
-  primary: { backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center', marginTop: space.md },
-  primaryText: { color: colors.onPrimary, ...type.label },
+  wrap: { gap: space.xl },
+  caption: { color: '#5E5E59', fontSize: 17 },
+  display: { color: colors.ink, fontSize: 112, fontWeight: '100', letterSpacing: -7.3, lineHeight: 120, marginLeft: -4, fontVariant: ['tabular-nums'] },
   disabled: { opacity: 0.5 },
-  message: { color: colors.ink, ...type.caption, lineHeight: 19 },
+  message: { color: colors.ink, fontSize: 14, lineHeight: 19 },
+  footer: { gap: space.sm },
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  setButton: { flex: 1, height: 58, borderRadius: 29, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  setText: { color: colors.onPrimary, fontSize: 18, fontWeight: '600' },
 });

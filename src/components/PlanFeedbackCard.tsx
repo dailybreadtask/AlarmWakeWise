@@ -6,7 +6,7 @@ import { suggestGetReady } from '../plans/learning';
 import { listFeedback, plansAwaitingFeedback, saveFeedback, type Outcome, type PrepFeel, type SavedPlan } from '../plans/planRepository';
 import { loadPreferences, savePreference } from '../context/contextRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
 type Step = { kind: 'outcome' } | { kind: 'prep'; outcome: Outcome } | { kind: 'suggest'; minutes: number; reason: string } | { kind: 'done' };
@@ -47,40 +47,34 @@ export function PlanFeedbackCard() {
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.caption}>How did it go?</Text>
+    <View style={styles.wrap}>
+      <Text style={styles.eyebrow}>How did it go?</Text>
       <Text style={styles.title}>“{plan.goal}”</Text>
       {step.kind === 'outcome' ? (
-        <View style={styles.row}>
+        <View>
           {(Object.keys(OUTCOME_LABEL) as Outcome[]).map((o) => (
-            <PressScale key={o} style={styles.chip} onPress={() => setStep({ kind: 'prep', outcome: o })} accessibilityRole="button">
-              <Text style={styles.chipText}>{OUTCOME_LABEL[o]}</Text>
-            </PressScale>
+            <Choice key={o} label={OUTCOME_LABEL[o]} onPress={() => setStep({ kind: 'prep', outcome: o })} />
           ))}
         </View>
       ) : null}
       {step.kind === 'prep' ? (
         <>
           <Text style={styles.body}>Was the time to get ready right?</Text>
-          <View style={styles.row}>
+          <View>
             {(Object.keys(PREP_LABEL) as PrepFeel[]).map((p) => (
-              <PressScale key={p} style={styles.chip} onPress={() => void answerPrep(step.outcome, p)} accessibilityRole="button">
-                <Text style={styles.chipText}>{PREP_LABEL[p]}</Text>
-              </PressScale>
+              <Choice key={p} label={PREP_LABEL[p]} onPress={() => void answerPrep(step.outcome, p)} />
             ))}
           </View>
         </>
       ) : null}
       {step.kind === 'suggest' ? (
         <>
-          <Text style={styles.body}>{step.reason} Change your default to {step.minutes} minutes?</Text>
-          <View style={styles.row}>
-            <PressScale style={styles.chip} onPress={() => void acceptSuggestion(step.minutes)} accessibilityRole="button">
-              <Text style={styles.chipText}>Yes, change it</Text>
-            </PressScale>
-            <PressScale style={styles.chip} onPress={() => setStep({ kind: 'done' })} accessibilityRole="button">
-              <Text style={styles.chipText}>No, keep it</Text>
-            </PressScale>
+          <Text style={styles.body}>
+            {step.reason} Change your default to {step.minutes} minutes?
+          </Text>
+          <View>
+            <Choice label="Yes, change it" onPress={() => void acceptSuggestion(step.minutes)} />
+            <Choice label="No, keep it" onPress={() => setStep({ kind: 'done' })} />
           </View>
         </>
       ) : null}
@@ -88,12 +82,22 @@ export function PlanFeedbackCard() {
   );
 }
 
+/** One answer, as a line with a hairline under it. */
+function Choice({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <PressScale style={styles.choice} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+      <Text style={styles.choiceText}>{label}</Text>
+      <Text style={styles.chevron}>›</Text>
+    </PressScale>
+  );
+}
+
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.card, padding: space.lg, gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
-  caption: { color: colors.muted, ...type.caption },
-  title: { color: colors.ink, ...type.label },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  chip: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: colors.paper },
-  chipText: { color: colors.ink, ...type.label },
+  wrap: { gap: space.sm, paddingBottom: space.sm, borderBottomWidth: 1, borderBottomColor: colors.ink },
+  eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
+  title: { color: colors.ink, fontSize: 20, fontWeight: '500', letterSpacing: -0.3 },
+  body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
+  choice: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderTopWidth: 1, borderTopColor: '#CFCFC9' },
+  choiceText: { flex: 1, color: colors.ink, fontSize: 17 },
+  chevron: { color: '#8A8A84', fontSize: 22 },
 });

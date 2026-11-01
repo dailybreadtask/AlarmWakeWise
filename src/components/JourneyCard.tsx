@@ -12,7 +12,7 @@ import { moveWakeAlarm } from '../journey/moveWakeAlarm';
 import { fetchRailBoard, type RailBoardResult } from '../rail/railClient';
 import { markAlarmCancelled, saveAlarm } from '../storage/alarmRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 import { PressScale } from './PressScale';
 
 interface Loaded {
@@ -75,8 +75,8 @@ export function JourneyCard() {
   }
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.caption}>Your journey</Text>
+    <View style={styles.wrap}>
+      <Text style={styles.eyebrow}>Your journey</Text>
       <Text style={styles.headline}>{text.headline}</Text>
       <Text style={styles.body}>{error ?? text.detail}</Text>
       {proposal ? (
@@ -87,24 +87,28 @@ export function JourneyCard() {
               <Text style={styles.primaryText}>Move my alarm</Text>
             </PressScale>
             <PressScale style={styles.secondary} onPress={() => setMessage('Your alarm stays where it is.')} accessibilityRole="button">
-              <Text style={styles.label}>Keep my alarm</Text>
+              <Text style={styles.secondaryText}>Keep it</Text>
             </PressScale>
           </View>
         </>
       ) : null}
-      {message ? <Text style={styles.body} accessibilityRole="alert">{message}</Text> : null}
+      {message ? (
+        <Text style={styles.body} accessibilityRole="alert">
+          {message}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.card, padding: space.lg, gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
-  caption: { color: colors.muted, ...type.caption },
-  headline: { color: colors.ink, ...type.title },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  label: { color: colors.ink, ...type.label },
-  row: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
-  primary: { flex: 1, backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center' },
-  primaryText: { color: colors.onPrimary, ...type.label },
-  secondary: { flex: 1, borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center' },
+  wrap: { gap: space.sm, paddingBottom: space.lg, borderBottomWidth: 1, borderBottomColor: colors.ink },
+  eyebrow: { color: colors.muted, fontSize: 12, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
+  headline: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
+  body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
+  row: { flexDirection: 'row', gap: 10, marginTop: space.xs },
+  primary: { flex: 1.4, minHeight: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(32,32,32,0.12)' },
+  primaryText: { color: colors.onPrimary, fontSize: 16, fontWeight: '600' },
+  secondary: { flex: 1, minHeight: 52, borderRadius: 26, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  secondaryText: { color: colors.ink, fontSize: 16 },
 });

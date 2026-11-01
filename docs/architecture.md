@@ -237,3 +237,11 @@ Follows the spec §12 backlog and the master prompt's dependency order.
 5. Speech to text: server endpoint, client and recording hook. Done, 39 tests; device recording not yet tested.
 6. Speech consent and capture screens. Done: consent is off by default and persisted in SQLite (`consent_scope`), and the capture screen falls back to typing. Bundles for iOS; device test outstanding.
 7. Interpretation: `POST /intents/parse` on the server calls OpenAI `gpt-4.1-mini` with a strict JSON schema, and the answer is validated on the server and again on the phone. Built and live-tested on three requests. The review screen shows the result and schedules nothing. A 100+ case evaluation set is not built yet.
+
+## 7i. Weather (Apple WeatherKit)
+
+- **Where it runs:** `server/weather.ts` signs a one-hour ES256 developer token from the WeatherKit key and asks `weatherkit.apple.com` for current conditions and the hourly forecast. The key (`server/secrets/*.p8`, git-ignored) never leaves the server.
+- **Route:** `GET /weather/today?timezone=…` with either `lat` and `lon`, or `place` (a town or city, found with TomTom). It returns one short line, for example `{ temperatureC: 10.3, text: "Cloudy, staying dry" }`, plus Apple's attribution. Answers are cached for 30 minutes per 0.01° of latitude and longitude. Without the four `WEATHERKIT_*` settings it answers 503 `no_weather_provider`.
+- **Rain rule:** an hour counts as wet at a 50% chance or more. The line says when rain stops, when it starts, or that the day stays dry.
+- **Privacy:** the app asks only if the person turns on "Use my home for the weather" (scope `location`). It sends the home place's coordinates, or its town or city if it has none. The server logs the outcome, never the location.
+- **On screen:** a line under the next-alarm countdown on home, and a line in the guided morning. Both carry the Apple Weather mark and a link to Apple's data-source page.

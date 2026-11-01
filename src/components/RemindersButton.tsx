@@ -5,8 +5,8 @@ import { remindersFor } from '../reminders/reminderPlan';
 import { expoReminderBridge } from '../reminders/expoReminders';
 import { scheduleReminders } from '../reminders/reminderScheduler';
 import type { TimelineEntry } from '../domain/planner';
-import { colors, space, type } from '../theme/tokens';
-import { PressScale } from './PressScale';
+import { colors, space } from '../theme/tokens';
+import { Line } from './CollapsibleLine';
 
 /** Sets a reminder for each step of the plan. These are notifications: iOS may silence them in Focus. */
 export function RemindersButton({ timeline }: { timeline: TimelineEntry[] }) {
@@ -26,18 +26,17 @@ export function RemindersButton({ timeline }: { timeline: TimelineEntry[] }) {
 
   return (
     <View style={styles.wrap}>
-      <PressScale style={[styles.button, busy && styles.disabled]} onPress={() => void set()} disabled={busy} accessibilityRole="button" accessibilityLabel="Remind me at each step">
-        <Text style={styles.buttonText}>{busy ? 'Setting reminders…' : 'Remind me at each step'}</Text>
-      </PressScale>
-      {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
+      <Line title={busy ? 'Setting reminders…' : 'Remind me at each step'} value="Notifications" onPress={() => void set()} />
+      {message ? (
+        <Text style={styles.message} accessibilityRole="alert">
+          {message}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: space.sm },
-  button: { borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingVertical: space.md, alignItems: 'center', backgroundColor: colors.card },
-  buttonText: { color: colors.ink, ...type.label },
-  disabled: { opacity: 0.5 },
-  message: { color: colors.ink, ...type.caption, lineHeight: 19 },
+  message: { color: colors.muted, fontSize: 14, lineHeight: 19 },
 });

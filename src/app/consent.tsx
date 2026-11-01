@@ -1,11 +1,12 @@
-import { Stack } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { ContextScope } from '../domain/context';
 import { useConsent } from '../consent/ConsentProvider';
-import { colors, space, type as typeScale } from '../theme/tokens';
+import { Intro, Page, SwitchLine } from '../components/Layout';
+import { colors } from '../theme/tokens';
 
+/** What WakeWise may send, and when. Everything is off until you turn it on, and each choice has its own switch. */
 export default function ConsentScreen() {
   const { ready, hasConsent, setScope } = useConsent();
   const [error, setError] = useState<string | null>(null);
@@ -17,44 +18,41 @@ export default function ConsentScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: 'Speech and privacy' }} />
+    <Page title="Speech and privacy">
+      <Intro>Nothing is sent until you turn it on. You can change any of this at any time.</Intro>
 
-      <View style={styles.row}>
-        <Text style={styles.label}>Let WakeWise read my requests</Text>
-        <Switch
-          value={hasConsent('ai_reading')}
-          disabled={!ready}
-          onValueChange={(on) => toggle('ai_reading', on)}
-          accessibilityLabel="Let WakeWise read my requests"
-        />
+      <View style={styles.group}>
+        <SwitchLine title="Let WakeWise read my requests" value={hasConsent('ai_reading')} disabled={!ready} onChange={(on) => void toggle('ai_reading', on)} />
+        <Text style={styles.body}>
+          To understand what you need, WakeWise sends the words you type or say, the current date and time, your timezone, and the names of your saved places (such as work) to OpenAI. We do not store the request on our server. We do not send your calendar, and your location is only sent for the weather, if you turn that on below. Turn this off and planning stays disabled until you turn it back on.
+        </Text>
       </View>
-      <Text style={styles.body}>
-        To understand what you need, WakeWise sends the words you type or say, the current date and time, your timezone, and the names of your saved places (such as work) to OpenAI. We do not store the request on our server. We do not send your location or calendar. Turn this off and Send stays disabled until you turn it back on.
-      </Text>
 
-      <View style={styles.row}>
-        <Text style={styles.label}>Allow speech to text</Text>
-        <Switch
-          value={hasConsent('speech')}
-          disabled={!ready}
-          onValueChange={(on) => toggle('speech', on)}
-          accessibilityLabel="Allow speech to text"
-        />
+      <View style={styles.group}>
+        <SwitchLine title="Allow speech to text" value={hasConsent('speech')} disabled={!ready} onChange={(on) => void toggle('speech', on)} />
+        <Text style={styles.body}>
+          When this is on, a recording you make is sent to the WakeWise speech service, which passes it to OpenAI to turn into text. The recording is not stored on our server. You can always type instead.
+        </Text>
       </View>
-      <Text style={styles.body}>
-        When this is on, a recording you make is sent to the WakeWise speech service, which passes it to OpenAI to turn into text. The recording is not stored on our server. You can always type instead.
-      </Text>
 
-      {error ? <Text style={styles.error} accessibilityRole="alert">{error}</Text> : null}
-    </ScrollView>
+      <View style={styles.group}>
+        <SwitchLine title="Use my home for the weather" value={hasConsent('location')} disabled={!ready} onChange={(on) => void toggle('location', on)} />
+        <Text style={styles.body}>
+          When this is on, WakeWise sends the location of your home place (or its town or city, if it has no location saved) to the WakeWise server, which asks Apple Weather for today’s forecast. We do not store it. This is the only time a place’s location leaves your phone. Weather is provided by Apple Weather.
+        </Text>
+      </View>
+
+      {error ? (
+        <Text style={styles.error} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
+    </Page>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: space.lg, gap: space.lg, backgroundColor: colors.paper, flexGrow: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { color: colors.ink, ...typeScale.label, fontSize: 17 },
-  body: { color: colors.ink, fontSize: 15, lineHeight: 22 },
-  error: { fontSize: 15, color: colors.danger },
+  group: { gap: 4 },
+  body: { color: colors.muted, fontSize: 14, lineHeight: 20, paddingTop: 4 },
+  error: { color: colors.danger, fontSize: 15 },
 });

@@ -14,6 +14,8 @@ export interface BriefingInput {
   plan: Extract<PlanOutcome, { ok: true }> | null;
   /** The live train, if one was chosen, with the feed time it came from. */
   train: { label: string; departsAt: Date; status: string; asOf: string | null } | null;
+  /** Today's weather, if the person has allowed it and it could be fetched. */
+  weather?: { temperatureC: number; text: string; asOf: string } | null;
 }
 
 export interface BriefingLine {
@@ -34,7 +36,11 @@ export function buildBriefing(input: BriefingInput): BriefingLine[] {
     const asOf = input.train.asOf ? `, checked ${clock(new Date(input.train.asOf), input.timezone)}` : '';
     lines.push({ text: `${input.train.label} leaves at ${clock(input.train.departsAt, input.timezone)}, ${input.train.status.toLowerCase()}${asOf}.`, source: 'National Rail Enquiries (live)' });
   }
-  lines.push({ text: 'Weather is not connected yet, so I cannot tell you about rain.', source: 'Weather' });
+  if (input.weather) {
+    lines.push({ text: `${Math.round(input.weather.temperatureC)}°, ${input.weather.text.charAt(0).toLowerCase()}${input.weather.text.slice(1)}.`, source: `Apple Weather, checked ${clock(new Date(input.weather.asOf), input.timezone)}` });
+  } else {
+    lines.push({ text: 'I do not have the weather for you, so I cannot tell you about rain.', source: 'Weather' });
+  }
   return lines;
 }
 

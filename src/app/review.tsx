@@ -1,11 +1,12 @@
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useSQLiteContext } from 'expo-sqlite';
 import { loadPreferences } from '../context/contextRepository';
 import { earliestWakeFor } from '../domain/time';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Page, TextLink } from '../components/Layout';
 import { PlanView, type Assumptions } from '../components/PlanView';
 import { QuickAlarm } from '../components/QuickAlarm';
 import { RemindersButton } from '../components/RemindersButton';
@@ -21,7 +22,7 @@ import { RailPlan } from '../rail/RailPlan';
 import { validateInterpretation, type Interpretation } from '../domain/interpretation';
 import { planFromInterpretation } from '../domain/planFromInterpretation';
 import { resolveDeadline } from '../domain/resolveDeadline';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors } from '../theme/tokens';
 
 /** Tells the person when the app chose a.m. or p.m. for them, so they can change it. */
 function AssumedTimeNote({ interpretation }: { interpretation: Interpretation }) {
@@ -77,13 +78,10 @@ export default function ReviewScreen() {
 
   if (!interpretation) {
     return (
-      <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Review' }} />
+      <Page title="Review">
         <Text style={styles.body}>This request could not be shown. Please try again.</Text>
-        <Pressable onPress={() => router.back()} accessibilityRole="button">
-          <Text style={styles.link}>Back</Text>
-        </Pressable>
-      </View>
+        <TextLink label="Back" onPress={() => router.back()} />
+      </Page>
     );
   }
 
@@ -93,8 +91,7 @@ export default function ReviewScreen() {
     const resolved = commitment ? resolveDeadline(commitment.deadline, timezone, now) : null;
     const passed = resolved?.ok === true && resolved.at <= now;
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Stack.Screen options={{ title: 'Quick alarm' }} />
+      <Page title="Quick alarm">
         <Text style={styles.quote}>“{interpretation.goal}”</Text>
         {resolved?.ok && !passed ? (
           <QuickAlarm at={resolved.at} timezone={timezone} />
@@ -104,10 +101,8 @@ export default function ReviewScreen() {
             {!passed ? <ClarifyQuestions questions={[resolved && !resolved.ok ? resolved.question : 'What time should the alarm go off?']} originalText={originalText} /> : null}
           </View>
         )}
-        <Pressable onPress={() => router.back()} accessibilityRole="button">
-          <Text style={styles.link}>Edit my request</Text>
-        </Pressable>
-      </ScrollView>
+        <TextLink label="Edit my request" onPress={() => router.back()} />
+      </Page>
     );
   }
 
@@ -116,8 +111,7 @@ export default function ReviewScreen() {
     const commitment = interpretation.commitments[0];
     const resolved = commitment ? resolveDeadline(commitment.deadline, timezone, now) : null;
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Stack.Screen options={{ title: 'Proposed plan' }} />
+      <Page title="Your plan">
         <Text style={styles.quote}>“{interpretation.goal}”</Text>
         <AssumedTimeNote interpretation={interpretation} />
         {resolved?.ok ? (
@@ -137,12 +131,8 @@ export default function ReviewScreen() {
             <ClarifyQuestions questions={[resolved?.ok === false ? resolved.question : 'When do you need to be there?']} originalText={originalText} />
           </View>
         )}
-        <View style={styles.actions}>
-          <Pressable style={styles.secondary} onPress={() => router.back()} accessibilityRole="button">
-            <Text style={styles.secondaryText}>Edit</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+        <TextLink label="Change my request" onPress={() => router.back()} />
+      </Page>
     );
   }
 
@@ -152,8 +142,7 @@ export default function ReviewScreen() {
   const deadlineForNeed = commitmentForNeed ? resolveDeadline(commitmentForNeed.deadline, timezone, now) : null;
   if (need === 'needs_mode' || (need && deadlineForNeed && !deadlineForNeed.ok)) {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Stack.Screen options={{ title: 'Proposed plan' }} />
+      <Page title="Your plan">
         <Text style={styles.quote}>“{interpretation.goal}”</Text>
         <AssumedTimeNote interpretation={interpretation} />
         <View style={styles.block}>
@@ -163,22 +152,17 @@ export default function ReviewScreen() {
             <ClarifyQuestions questions={[deadlineForNeed && !deadlineForNeed.ok ? deadlineForNeed.question : 'When do you need to be there?']} originalText={originalText} />
           )}
         </View>
-      </ScrollView>
+      </Page>
     );
   }
   if (need && typeof need === 'object' && deadlineForNeed?.ok) {
     return (
-      <ScrollView contentContainerStyle={styles.container}>
-        <Stack.Screen options={{ title: 'Proposed plan' }} />
+      <Page title="Your plan">
         <Text style={styles.quote}>“{interpretation.goal}”</Text>
         <AssumedTimeNote interpretation={interpretation} />
         <EstimatedPlan need={need} interpretation={interpretation} goal={interpretation.goal} deadlineAt={deadlineForNeed.at} timezone={timezone} assumptions={assumptions} onChange={setAssumptions} />
-        <View style={styles.actions}>
-          <Pressable style={styles.secondary} onPress={() => router.back()} accessibilityRole="button">
-            <Text style={styles.secondaryText}>Edit</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+        <TextLink label="Change my request" onPress={() => router.back()} />
+      </Page>
     );
   }
 
@@ -193,59 +177,67 @@ export default function ReviewScreen() {
   const approvedWake = planned.ok && planned.outcome.ok ? planned.outcome.wakeAt : null;
   const approvedTimeline = planned.ok && planned.outcome.ok ? planned.outcome.timeline : null;
 
+  const change = (
+    <Pressable style={styles.change} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Change the plan">
+      <Text style={styles.changeText}>Change</Text>
+    </Pressable>
+  );
+
+  const footerNode = (
+    planned.ok && planned.outcome.ok ? (
+      <QuickAlarm
+        footer
+        secondary={change}
+        at={planned.outcome.wakeAt}
+        timezone={timezone}
+        caption="Approve the wake alarm"
+        onSet={() => {
+          if (!approvedWake || !approvedTimeline) return;
+          const planId = randomUUID();
+          void savePlan(sqlFrom(db), {
+            id: planId,
+            goal: interpretation.goal,
+            eventAt: eventInstant(interpretation, timezone, now).toISOString(),
+            wakeAt: approvedWake.toISOString(),
+            getReadyMinutes: assumptions.getReadyMinutes,
+            createdAt: new Date().toISOString(),
+          }).then(() => saveTimeline(sqlFrom(db), planId, approvedTimeline));
+        }}
+        note="Only the wake alarm is set here. Use the reminders button for each step."
+      />
+    ) : (
+      <View style={styles.footerRow}>{change}</View>
+    )
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: 'Proposed plan' }} />
-      <Text style={styles.quote}>“{interpretation.goal}”</Text>
-      <AssumedTimeNote interpretation={interpretation} />
+    <Page title="Your plan" footer={footerNode}>
+        <Text style={styles.quote}>“{interpretation.goal}”</Text>
+        <AssumedTimeNote interpretation={interpretation} />
 
-      {planned.ok && planned.outcome.ok ? (
-        <>
-          <PlanView
-            outcome={planned.outcome}
-            timezone={timezone}
-            assumptions={assumptions}
-            onChange={setAssumptions}
-            onStartTimer={(entry) => {
-              void startTimer(expoReminderBridge, sqlFrom(db), { id: randomUUID(), label: entry.label, minutes: entry.minutes, now: new Date(), startAt: entry.startsAt, nativeId: randomUUID() }, alarmBridge).then((result) => {
-                Alert.alert(result.ok ? 'Timer set' : 'Timer not set', result.ok ? `${entry.label} ends at ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timezone }).format(new Date(result.timer.endsAt))}.` : 'Check that notifications are on and the time is still ahead.');
-              });
-            }}
-          />
-          <QuickAlarm
-            at={planned.outcome.wakeAt}
-            timezone={timezone}
-            caption="Approve the wake alarm"
-            onSet={() => {
-              if (!approvedWake || !approvedTimeline) return;
-              const planId = randomUUID();
-              void savePlan(sqlFrom(db), {
-                id: planId,
-                goal: interpretation.goal,
-                eventAt: eventInstant(interpretation, timezone, now).toISOString(),
-                wakeAt: approvedWake.toISOString(),
-                getReadyMinutes: assumptions.getReadyMinutes,
-                createdAt: new Date().toISOString(),
-              }).then(() => saveTimeline(sqlFrom(db), planId, approvedTimeline));
-            }}
-            note="Only the wake alarm is set here. Use the reminders button for each step."
-          />
-          <RemindersButton timeline={planned.outcome.timeline} />
-        </>
-      ) : (
-        <View style={styles.block}>
-          <Text style={styles.title}>{planned.ok ? planReason(planned.outcome.ok ? '' : planned.outcome.reason) : 'I need a few details first'}</Text>
-          {planned.ok ? null : <ClarifyQuestions questions={planned.questions.map((q) => q.question)} originalText={originalText} />}
-        </View>
-      )}
-      {interpretation.questions.length > 0 && planned.ok ? <ClarifyQuestions questions={interpretation.questions.map((q) => q.question)} originalText={originalText} /> : null}
-
-      <View style={styles.actions}>
-        <Pressable style={styles.secondary} onPress={() => router.back()} accessibilityRole="button">
-          <Text style={styles.secondaryText}>Edit</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+        {planned.ok && planned.outcome.ok ? (
+          <>
+            <PlanView
+              outcome={planned.outcome}
+              timezone={timezone}
+              assumptions={assumptions}
+              onChange={setAssumptions}
+              onStartTimer={(entry) => {
+                void startTimer(expoReminderBridge, sqlFrom(db), { id: randomUUID(), label: entry.label, minutes: entry.minutes, now: new Date(), startAt: entry.startsAt, nativeId: randomUUID() }, alarmBridge).then((result) => {
+                  Alert.alert(result.ok ? 'Timer set' : 'Timer not set', result.ok ? `${entry.label} ends at ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timezone }).format(new Date(result.timer.endsAt))}.` : 'Check that notifications are on and the time is still ahead.');
+                });
+              }}
+            />
+            <RemindersButton timeline={planned.outcome.timeline} />
+          </>
+        ) : (
+          <View style={styles.block}>
+            <Text style={styles.title}>{planned.ok ? planReason(planned.outcome.ok ? '' : planned.outcome.reason) : 'I need a few details first'}</Text>
+            {planned.ok ? null : <ClarifyQuestions questions={planned.questions.map((q) => q.question)} originalText={originalText} />}
+          </View>
+        )}
+        {interpretation.questions.length > 0 && planned.ok ? <ClarifyQuestions questions={interpretation.questions.map((q) => q.question)} originalText={originalText} /> : null}
+    </Page>
   );
 }
 
@@ -263,13 +255,11 @@ function planReason(reason: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: space.lg, gap: space.md, backgroundColor: colors.paper, flexGrow: 1 },
-  quote: { color: colors.ink, ...type.title, fontWeight: '400' },
-  title: { color: colors.ink, ...type.title },
-  body: { color: colors.ink, ...type.body },
-  block: { gap: space.sm, paddingVertical: space.sm },
-  link: { color: colors.ink, textDecorationLine: 'underline', ...type.label },
-  actions: { flexDirection: 'row', gap: space.md, marginTop: space.lg },
-  secondary: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.md, paddingHorizontal: space.xl, alignItems: 'center' },
-  secondaryText: { color: colors.ink, ...type.label },
+  quote: { color: colors.ink, fontSize: 26, fontWeight: '500', letterSpacing: -0.7, lineHeight: 31 },
+  title: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
+  body: { color: colors.muted, fontSize: 15, lineHeight: 21 },
+  block: { gap: 12 },
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  change: { minHeight: 58, paddingHorizontal: 24, borderRadius: 29, borderWidth: 1, borderColor: '#CFCFC9', alignItems: 'center', justifyContent: 'center' },
+  changeText: { color: colors.ink, fontSize: 17 },
 });

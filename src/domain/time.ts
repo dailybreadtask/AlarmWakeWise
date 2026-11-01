@@ -56,3 +56,11 @@ export function earliestWakeFor(eventAt: Date, earliestWake: string | null, time
   const local = localToUtc(localDateOf(eventAt, timezone), earliestWake, timezone);
   return local.ok ? local.at : null;
 }
+
+/** The next time the local clock reads hour:minute: today if still ahead, otherwise tomorrow. */
+export function nextOccurrence(hour: number, minute: number, now: Date): Date {
+  const at = new Date(now);
+  at.setHours(hour, minute, 0, 0);
+  if (at.getTime() <= now.getTime()) at.setDate(at.getDate() + 1);
+  return at;
+}

@@ -1,12 +1,11 @@
-import { Stack } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { PressScale } from '../components/PressScale';
+import { Intro, Page, PrimaryButton, SecondaryButton, SectionLabel } from '../components/Layout';
 import { alarmBridge } from '../alarm/nativeBridge';
 import { ensureAuthorized, scheduleAlarm, type AuthState } from '../alarm/alarmScheduler';
-import { colors, radius, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 
 const TEST_DELAY_MS = 2 * 60 * 1000;
 
@@ -63,38 +62,25 @@ export default function AlarmTestScreen() {
   if (!__DEV__) return null;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: 'Alarm test' }} />
-      <Text style={styles.body}>Development only. Use it to check that iOS rings an alarm with the app closed and the phone locked.</Text>
+    <Page title="Alarm test">
+      <Intro>Development only. Use it to check that iOS rings an alarm with the app closed and the phone locked.</Intro>
       <Text style={styles.label}>Permission: {auth}</Text>
 
-      <PressScale style={styles.button} onPress={allow} accessibilityRole="button">
-        <Text style={styles.buttonText}>Allow alarms</Text>
-      </PressScale>
-      <PressScale style={styles.button} onPress={scheduleTest} accessibilityRole="button">
-        <Text style={styles.buttonText}>Schedule test alarm in 2 minutes</Text>
-      </PressScale>
-      {testId ? (
-        <PressScale style={styles.secondary} onPress={cancelTest} accessibilityRole="button">
-          <Text style={styles.label}>Cancel test alarm</Text>
-        </PressScale>
-      ) : null}
+      <PrimaryButton label="Allow alarms" onPress={() => void allow()} />
+      <SecondaryButton label="Schedule test alarm in 2 minutes" onPress={() => void scheduleTest()} />
+      {testId ? <SecondaryButton label="Cancel test alarm" onPress={() => void cancelTest()} /> : null}
 
       <Text style={styles.body}>{status}</Text>
       <View style={styles.list}>
-        <Text style={styles.label}>Held by the OS</Text>
+        <SectionLabel>Held by the OS</SectionLabel>
         {held.length === 0 ? <Text style={styles.body}>None.</Text> : held.map((h) => <Text key={h} style={styles.body}>{h}</Text>)}
       </View>
-    </ScrollView>
+    </Page>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: space.lg, gap: space.md, backgroundColor: colors.paper, flexGrow: 1 },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  label: { color: colors.ink, ...type.label },
-  button: { backgroundColor: colors.primary, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center' },
-  buttonText: { color: colors.ink, ...type.label },
-  secondary: { borderWidth: 1, borderColor: colors.line, borderRadius: radius.pill, paddingVertical: space.md, alignItems: 'center' },
-  list: { gap: space.xs, marginTop: space.lg },
+  body: { color: colors.ink, fontSize: 15, lineHeight: 21 },
+  label: { color: colors.ink, fontSize: 15, fontWeight: '500' },
+  list: { gap: space.sm },
 });

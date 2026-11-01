@@ -1,18 +1,19 @@
 import { Platform } from 'react-native';
 
 /**
- * The approved v3.0 mockup: off-white paper, black ink, and one signal yellow
- * for the primary action on each screen. Black text sits on yellow.
+ * The approved Swiss dashboard (project/Main.dc.html on the Design canvas): warm off-white
+ * paper, charcoal ink, and one signal yellow for the primary action on each screen.
+ * Charcoal text sits on yellow.
  */
 export const colors = {
-  paper: '#F4F4F2',
-  ink: '#111111',
-  muted: '#6B6B68',
-  line: '#D6D6D2',
+  paper: '#F5F5F2',
+  ink: '#202020',
+  muted: '#6B6B66',
+  line: '#E3E3DE',
   card: '#FFFFFF',
   dark: '#1C1C1C',
-  primary: '#F5E14B',
-  onPrimary: '#111111',
+  primary: '#F5E74B',
+  onPrimary: '#202020',
   danger: '#C2410C',
 } as const;
 

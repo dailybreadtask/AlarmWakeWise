@@ -14,7 +14,7 @@ import { speechConfig } from '../config';
 import { useSQLiteContext } from 'expo-sqlite';
 import { listPlaces, type SavedPlace } from '../context/contextRepository';
 import { sqlFrom } from '../storage/sqlAdapter';
-import { colors, space, type } from '../theme/tokens';
+import { colors, space } from '../theme/tokens';
 import { fetchRailBoard, searchRailStations, type RailBoardResult, type StationMatch } from './railClient';
 
 /** Walk to the station. An estimate, labelled on screen. */
@@ -197,9 +197,9 @@ export function RailPlan({ originalText, goal, fromRaw, toRaw, deadlineAt, timez
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
+  wrap: { gap: space.xl },
   block: { gap: space.sm, paddingVertical: space.sm },
-  title: { color: colors.ink, ...type.title },
-  body: { color: colors.ink, ...type.body, lineHeight: 22 },
-  caption: { color: colors.muted, ...type.caption },
+  title: { color: colors.ink, fontSize: 22, fontWeight: '600', letterSpacing: -0.4 },
+  body: { color: colors.ink, fontSize: 16, lineHeight: 23 },
+  caption: { color: colors.muted, fontSize: 13, lineHeight: 18 },
 });

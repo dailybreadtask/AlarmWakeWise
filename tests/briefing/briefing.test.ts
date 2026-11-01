@@ -30,14 +30,26 @@ describe('buildBriefing', () => {
     expect(lines[0].source).toBe('National Rail Enquiries (live)');
   });
 
-  it('says plainly when weather is not connected, rather than leaving it out', () => {
+  it('says plainly when it has no weather, rather than leaving it out', () => {
     const lines = buildBriefing({ goal: 'Work', timezone: 'Europe/London', now: new Date('2026-10-30T07:00:00Z'), plan: null, train: null });
     expect(lines.map((l) => l.source)).toEqual(['Weather']);
-    expect(lines[0].text).toMatch(/not connected/);
+    expect(lines[0].text).toMatch(/do not have the weather/);
+  });
+
+  it('gives the weather with its source and the time it was checked', () => {
+    const lines = buildBriefing({
+      goal: 'Work',
+      timezone: 'Europe/London',
+      now: new Date('2026-10-30T07:00:00Z'),
+      plan: null,
+      train: null,
+      weather: { temperatureC: 8.4, text: 'Rain until 10', asOf: '2026-10-30T06:55:00Z' },
+    });
+    expect(lines).toEqual([{ text: '8°, rain until 10.', source: 'Apple Weather, checked 06:55' }]);
   });
 
   it('reads the lines aloud in order', () => {
     const lines = buildBriefing({ goal: 'Work', timezone: 'Europe/London', now: new Date('2026-10-30T07:00:00Z'), plan, train: null });
-    expect(briefingSpeech(lines)).toBe('Next: Walk to the station at 07:30. Weather is not connected yet, so I cannot tell you about rain.');
+    expect(briefingSpeech(lines)).toBe('Next: Walk to the station at 07:30. I do not have the weather for you, so I cannot tell you about rain.');
   });
 });

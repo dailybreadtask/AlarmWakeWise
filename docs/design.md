@@ -35,3 +35,18 @@ No haptic on scroll, on entrance animations, or on success navigation. Haptics a
 - **Dotted background.** The mockup's capture screen has a dot grid. Not built: it would mean many layered views on every render. Revisit with a single SVG pattern.
 - **Translucent chrome.** The mockup's bottom bar is not translucent. Add it only with the tab bar, using a native `NativeTabs` bar rather than a custom one.
 - **Plan approval.** Approving sets the wake alarm only. Travel and reminder steps are not scheduled yet, and the screen says so.
+
+## Swiss rules settled during the build (Oct 30 to Nov 2)
+
+These apply to every screen. They come from the approved Design canvas and the changes the person asked for.
+
+- **Palette:** paper `#F5F5F2`, ink `#202020`, muted `#6B6B66`, one yellow `#F5E74B`. Dark screens (the challenge) use charcoal `#202020` with paper text and the same yellow.
+- **No white cards for lists.** Rows are single lines with a hairline underneath (`Line`, `CollapsibleLine`, `ControlLine`). A choice that needs space opens downwards in place, with a darker underline.
+- **No pills for choices.** Options are plain text with a rule under the chosen one (`Options`, the timer presets). Pills are only for the main action and the occasional Cancel or Change.
+- **One main action per screen:** a full-width yellow pill, 58 pt tall, fixed to the bottom. Its quieter partner is an outlined pill beside it.
+- **Big thin numerals** for anything that is a time or a count: weight 100, tight tracking.
+- **Every screen draws its own header:** a back arrow and the screen's name (`Page`). The default navigation header is off.
+- **Pickers scroll like iOS wheels,** loop, tick with a light haptic, and never stretch across the screen (`Wheel`, `regular` and `compact`).
+- **Live state stays in view.** A running timer is pinned while another is set. A countdown is never behind a scroll.
+- **Honest empty states.** Nothing is shown that the app does not know, such as weather before it is allowed.
+- **Reduced motion** is handled in each moving component, not added later.
