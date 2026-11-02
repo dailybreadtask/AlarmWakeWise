@@ -3,6 +3,7 @@
  * permission to send notifications, tells the server how to reach this phone, and hands over each journey to watch.
  * Turning it off removes the device from the server.
  */
+import * as Application from 'expo-application';
 import * as Notifications from 'expo-notifications';
 
 import { speechConfig } from '../config';
@@ -23,6 +24,21 @@ async function saveDeviceId(sql: SqlDb, id: string | null): Promise<void> {
   else await sql.runAsync('INSERT OR REPLACE INTO preference (key, value, updated_at) VALUES (?, ?, ?)', [DEVICE_KEY, id, new Date().toISOString()]);
 }
 
+/**
+ * Which Apple push service this build's token belongs to. Builds from Xcode and development builds get a sandbox token;
+ * TestFlight and the App Store get a production one. The build's own entitlement says which, so it is asked rather than
+ * guessed: a release build run straight from Xcode is still sandbox. A token sent to the wrong service is refused.
+ */
+export async function pushEnvironment(): Promise<'sandbox' | 'production'> {
+  try {
+    const environment = await Application.getIosPushNotificationServiceEnvironmentAsync();
+    if (environment) return environment === 'production' ? 'production' : 'sandbox';
+  } catch {
+    // Fall through to the build type.
+  }
+  return __DEV__ ? 'sandbox' : 'production';
+}
+
 export type EnableResult = { ok: true } | { ok: false; reason: 'no_server' | 'notifications_off' | 'no_token' | WatchError };
 
 /** Turns watching on: permission to notify, this phone's push token, and its id on the server. */
@@ -37,8 +53,7 @@ export async function enableWatching(sql: SqlDb): Promise<EnableResult> {
   } catch {
     return { ok: false, reason: 'no_token' };
   }
-  // A phone running from Xcode or a development build talks to Apple's sandbox. TestFlight and the App Store use production.
-  const registered = await registerDevice(pushToken, __DEV__ ? 'sandbox' : 'production', options());
+  const registered = await registerDevice(pushToken, await pushEnvironment(), options());
   if (!registered.ok) return { ok: false, reason: registered.error };
   await saveDeviceId(sql, registered.deviceId);
   return { ok: true };
