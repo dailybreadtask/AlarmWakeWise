@@ -70,13 +70,13 @@ export function ControlLine({ title, detail, right, onPress, danger }: { title: 
   );
 }
 
-/** A line with a switch: ink track and a yellow thumb when on, as on the dashboard. */
+/** A line with a switch: a yellow track when on, so on and off read at a glance. */
 export function SwitchLine({ title, detail, value, onChange, disabled }: { title: string; detail?: string; value: boolean; onChange: (on: boolean) => void; disabled?: boolean }) {
   return (
     <ControlLine
       title={title}
       detail={detail}
-      right={<Switch value={value} disabled={disabled} onValueChange={onChange} trackColor={{ false: colors.raised, true: colors.dim }} thumbColor={value ? colors.primary : colors.faint} accessibilityLabel={title} />}
+      right={<Switch value={value} disabled={disabled} onValueChange={onChange} trackColor={{ false: colors.raised, true: colors.primary }} thumbColor={value ? '#FFFFFF' : colors.faint} accessibilityLabel={title} />}
     />
   );
 }

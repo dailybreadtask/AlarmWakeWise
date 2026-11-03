@@ -37,8 +37,8 @@ export default function HomeScreen() {
   const { c } = useTheme();
   const weather = useTodayWeather();
   const [alarms, setAlarms] = useState<SavedAlarm[]>([]);
-  // The day whose alarms are listed, and for which a new alarm is set. Starts as today.
-  const [selected, setSelected] = useState(() => startOfDay(new Date()));
+  // The day the person tapped in the week. Until they tap one, the list follows the next alarm, so the big clock and the list agree.
+  const [picked, setPicked] = useState<Date | null>(null);
   // The time the person has dragged the tape to, before it is set. Null until they touch the tape.
   const [draft, setDraft] = useState<number | null>(null);
   const [setting, setSetting] = useState(false);
@@ -147,6 +147,8 @@ export default function HomeScreen() {
   const now = new Date();
   const planned = dayBeingPlanned(now);
   const next = alarms.find((a) => new Date(a.wakeAt).getTime() > now.getTime() && a.status !== 'cancelled') ?? null;
+  // The day whose alarms are listed, and for which a new alarm is set: the tapped day, else the day of the next alarm, else today.
+  const selected = picked ?? startOfDay(next ? new Date(next.wakeAt) : now);
   const dayAlarms = alarms.filter((a) => isSameDay(new Date(a.wakeAt), selected));
   const selectedIsToday = isSameDay(selected, now);
   const nextDate = next ? new Date(next.wakeAt) : null;
@@ -238,7 +240,7 @@ export default function HomeScreen() {
               key={d.label}
               onPress={() => {
                 void Haptics.selectionAsync();
-                setSelected(d.day);
+                setPicked(d.day);
                 setDraft(null);
               }}
               accessibilityRole="button"
@@ -295,8 +297,8 @@ export default function HomeScreen() {
                     value={a.status === 'scheduled'}
                     disabled={gone}
                     onValueChange={(on) => (on ? void turnOn(a) : turnOff(a))}
-                    trackColor={{ false: colors.raised, true: colors.dim }}
-                    thumbColor={a.status === 'scheduled' ? colors.primary : colors.faint}
+                    trackColor={{ false: colors.raised, true: colors.primary }}
+                    thumbColor={a.status === 'scheduled' ? '#FFFFFF' : colors.faint}
                     accessibilityLabel={`${a.title} alarm at ${clock(new Date(a.wakeAt))}`}
                   />
                 </View>
