@@ -41,6 +41,8 @@ export interface WatchStore {
   deleteDevice(id: string): Promise<void>;
   deleteDeviceByToken(token: string): Promise<void>;
   activeWatches(): Promise<ActiveWatch[]>;
+  /** One active watch, or null when there is none with that id. */
+  activeWatch(id: string): Promise<ActiveWatch | null>;
   /** Records what the last check found. `notified` is the status a push was sent for, null to clear it, undefined to keep it. */
   recordAssessment(id: string, status: string, notified: string | null | undefined, at: Date): Promise<void>;
   finishWatch(id: string): Promise<void>;
@@ -92,26 +94,13 @@ export class PgWatchStore implements WatchStore {
   }
 
   async activeWatches(): Promise<ActiveWatch[]> {
-    const res = await this.pool.query(
-      `SELECT w.*, d.apns_token, d.environment FROM watch w JOIN device d ON d.id = w.device_id WHERE w.status = 'active'`,
-    );
-    return res.rows.map((r) => ({
-      id: r.id,
-      deviceId: r.device_id,
-      fromCrs: r.from_crs,
-      toCrs: r.to_crs,
-      trainId: r.train_id,
-      departsAt: r.departs_at,
-      arrivesAt: r.arrives_at,
-      deadlineAt: r.deadline_at,
-      leaveAfterWakeMinutes: r.leave_after_wake_minutes,
-      bufferMinutes: r.buffer_minutes,
-      earliestWakeAt: r.earliest_wake_at,
-      wakeAt: r.wake_at,
-      timezone: r.timezone,
-      lastNotifiedStatus: r.last_notified_status,
-      device: { id: r.device_id, apnsToken: r.apns_token, environment: r.environment },
-    }));
+    const res = await this.pool.query(`SELECT w.*, d.apns_token, d.environment FROM watch w JOIN device d ON d.id = w.device_id WHERE w.status = 'active'`);
+    return res.rows.map(activeWatchOf);
+  }
+
+  async activeWatch(id: string): Promise<ActiveWatch | null> {
+    const res = await this.pool.query(`SELECT w.*, d.apns_token, d.environment FROM watch w JOIN device d ON d.id = w.device_id WHERE w.id = $1 AND w.status = 'active'`, [id]);
+    return res.rows[0] ? activeWatchOf(res.rows[0]) : null;
   }
 
   async recordAssessment(id: string, status: string, notified: string | null | undefined, at: Date): Promise<void> {
@@ -127,4 +116,25 @@ export class PgWatchStore implements WatchStore {
     const res = await this.pool.query("DELETE FROM watch WHERE status <> 'active' AND updated_at < $1", [before]);
     return res.rowCount ?? 0;
   }
+}
+
+/** One row of the watch-and-device join, as a watch. */
+function activeWatchOf(r: Record<string, any>): ActiveWatch {
+  return {
+    id: r.id,
+    deviceId: r.device_id,
+    fromCrs: r.from_crs,
+    toCrs: r.to_crs,
+    trainId: r.train_id,
+    departsAt: r.departs_at,
+    arrivesAt: r.arrives_at,
+    deadlineAt: r.deadline_at,
+    leaveAfterWakeMinutes: r.leave_after_wake_minutes,
+    bufferMinutes: r.buffer_minutes,
+    earliestWakeAt: r.earliest_wake_at,
+    wakeAt: r.wake_at,
+    timezone: r.timezone,
+    lastNotifiedStatus: r.last_notified_status,
+    device: { id: r.device_id, apnsToken: r.apns_token, environment: r.environment },
+  };
 }

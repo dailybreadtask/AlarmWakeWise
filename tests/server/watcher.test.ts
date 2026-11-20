@@ -48,6 +48,7 @@ function fakeStore(watches: ActiveWatch[]) {
     deleteDevice: async () => undefined,
     deleteDeviceByToken: async (t) => void log.deleted.push(t),
     activeWatches: async () => watches,
+    activeWatch: async (id) => watches.find((w) => w.id === id) ?? null,
     recordAssessment: async (id, status, notified) => void log.assessed.push([id, status, notified]),
     finishWatch: async (id) => void log.finished.push(id),
     purge: async () => 0,

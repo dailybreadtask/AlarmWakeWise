@@ -14,6 +14,7 @@ import { parseCrsTable, type CrsTable } from './stationLookup';
 import { MAX_AUDIO_BYTES, transcribeAudio, type TranscribeError } from './transcribe';
 import { sendPush, type ApnsConfig } from './push';
 import { MAX_WATCHES_PER_DEVICE, parseDevice, parseDeviceId, parseIds, parseWatch } from './watchApi';
+import { CachedWatchStore } from './cachedWatchStore';
 import { runWatchCycle } from './watcher';
 import { PgWatchStore, type WatchStore } from './watchStore';
 import { WEATHER_ATTRIBUTION, fetchWeatherBody, signDeveloperToken, summariseWeather, type WeatherKitConfig, type WeatherSummary } from './weather';
@@ -188,7 +189,7 @@ function journeyEstimateRoute(req: import('node:http').IncomingMessage, send: (s
 // Both are optional. Without them the app works, and watching is off. Neon's address says sslmode=require; verify-full is what
 // that already meant to the pg library, so it is spelled out to avoid a warning.
 const databaseUrl = process.env.DATABASE_URL ?? '';
-const watchStore: WatchStore | null = databaseUrl ? new PgWatchStore(new Pool({ connectionString: databaseUrl.replace('sslmode=require', 'sslmode=verify-full'), max: 3 })) : null;
+const watchStore: WatchStore | null = databaseUrl ? new CachedWatchStore(new PgWatchStore(new Pool({ connectionString: databaseUrl.replace('sslmode=require', 'sslmode=verify-full'), max: 3 }))) : null;
 const apnsKey = readPrivateKey('APNS_PRIVATE_KEY_PATH', 'APNS_PRIVATE_KEY_BASE64');
 const apnsConfig: ApnsConfig | null =
   process.env.APNS_TEAM_ID && process.env.APNS_KEY_ID && apnsKey ? { teamId: process.env.APNS_TEAM_ID, keyId: process.env.APNS_KEY_ID, privateKeyPem: apnsKey, topic: process.env.APNS_TOPIC ?? 'com.dailytaskapps.wakewise' } : null;
